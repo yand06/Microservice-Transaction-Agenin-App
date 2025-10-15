@@ -1,0 +1,69 @@
+#APPLICATION NAME
+spring:
+  application:
+    name: AGENIN_TRANSACTION
+    version: 1.0.0
+  banner:
+    location: classpath:/banner-text.txt
+  dataSource:
+    url: jdbc:postgresql://${AGENIN_DB_HOST}:${AGENIN_DB_PORT}/${AGENIN_DB_NAME}
+    username: ${AGENIN_DB_USERNAME}
+    password: ${AGENIN_DB_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+  #KAFKA CONFIGURATION
+  kafka:
+    consumer:
+      enable-auto-commit: true
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring:
+          deserializer:
+            key:
+              delegate:
+                class: org.springframework.kafka.common.serialization.StringDeserializer
+            value:
+              delegate:
+                class: org.springframework.kafka.common.serialization.StringDeserializer
+          #KAFKA TRUSTED PACKAGES FOR JSON DESERIALIZATION AND DEFAULT VALUE TYPE
+          json:
+            trusted:
+              packages: "*"
+            value:
+              default-type: com.jdt16.pinjol.transaction.dto.response.RestApiResponse
+#LOGGING
+logging:
+  level:
+    org:
+      springframework:
+        kafka: INFO
+        listener:
+          container: INFO
+      apache:
+        kafka: INFO
+        clients:
+          consumer: INFO
+#REQUEST TOPIC
+request-topic:
+  create-transaction-topic: create-transaction-po
+  create-log-topic: create-log-po
+request-reply-topic:
+  create-transaction-topic: create-transaction-co
+  create-log-topic: create-log-co
+#KAFKA
+connector:
+  environment: ${AGENIN_CONNECTOR_KFK_ENV}
+kafka:
+  bootstrap-servers: ${AGENIN_BOOTSTRAP_KFK_SERVER}
+  consumer-group: ${AGENIN_CONSUMER_GROUP}
+
+server:
+  port: 8282
