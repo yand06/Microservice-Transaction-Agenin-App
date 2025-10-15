@@ -111,7 +111,6 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     @Override
     public RestApiResponse<TransactionResponse> inquiry(UUID userId, UUID productId, TransactionRequest transactionRequest) {
-
         UUID transactionId = UUID.randomUUID();
         LocalDateTime transactionDate = LocalDateTime.now();
 
