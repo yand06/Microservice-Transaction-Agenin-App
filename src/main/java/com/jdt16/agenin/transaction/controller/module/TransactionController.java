@@ -50,7 +50,7 @@ public class TransactionController {
      *
      * <p>Metode ini menerima header {@code X-USER-ID} yang berisi identitas pengguna,
      * serta body permintaan berupa {@link TransactionRequest} yang telah divalidasi.
-     * Metode ini akan memanggil {@link TransactionService#inquiry(UUID, TransactionRequest)}
+     * Metode ini akan memanggil {@link TransactionService# inquiry(UUID, TransactionRequest)}
      * untuk memproses permintaan dan mengembalikan hasil dalam bentuk {@link RestApiResponse}.
      *
      * @param userId             ID unik pengguna yang dikirim melalui header {@code X-USER-ID}.
@@ -59,7 +59,7 @@ public class TransactionController {
      * @return Objek {@link ResponseEntity} yang berisi {@link RestApiResponse}
      * dengan data hasil inquiry, serta status HTTP 201 (Created).
      */
-    @PostMapping(RestApiPathUtility.API_PATH_INQUIRY)
+    @PostMapping(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT)
     public ResponseEntity<RestApiResponse<?>> inquiry(
             @RequestHeader("X-USER-ID") UUID userId,
             @RequestHeader("X-PRODUCT-ID") UUID productId,

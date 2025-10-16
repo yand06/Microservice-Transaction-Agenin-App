@@ -21,5 +21,6 @@ public class RestApiPathUtility {
 
 
     public static final String API_PATH_TRANSACTION = "/transaction";
+    public static final String API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT = "/mock-open-bank-account";
     public static final String API_PATH_INQUIRY = "/inquiry";
 }

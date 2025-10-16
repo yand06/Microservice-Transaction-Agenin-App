@@ -28,17 +28,17 @@ public class TransactionOpenBankAccountEntityDTO {
     private UUID transactionOpenBankAccountEntityDTOTransactionId;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_NAME, nullable = false, updatable = false)
-    private UUID transactionOpenBankAccountEntityDTOCustomerName;
+    private String transactionOpenBankAccountEntityDTOCustomerName;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_IDENTITY_NUMBER, nullable = false, updatable = false)
-    private UUID transactionOpenBankAccountEntityDTOCustomerIdentityNumber;
+    private String transactionOpenBankAccountEntityDTOCustomerIdentityNumber;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_PHONE_NUMBER, nullable = false, updatable = false)
-    private UUID transactionOpenBankAccountEntityDTOCustomerPhoneNumber;
+    private String transactionOpenBankAccountEntityDTOCustomerPhoneNumber;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_EMAIL, nullable = false, updatable = false)
-    private UUID transactionOpenBankAccountEntityDTOCustomerEmail;
+    private String transactionOpenBankAccountEntityDTOCustomerEmail;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_ADDRESS, nullable = false, updatable = false)
-    private UUID transactionOpenBankAccountEntityDTOCustomerAddress;
+    private String transactionOpenBankAccountEntityDTOCustomerAddress;
 }

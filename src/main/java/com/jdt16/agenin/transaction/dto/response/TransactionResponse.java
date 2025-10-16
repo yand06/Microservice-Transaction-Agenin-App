@@ -23,11 +23,23 @@ public class TransactionResponse {
     @JsonProperty("productId")
     private UUID transactionEntityDTOProductId;
 
-    @JsonProperty("transactionQuantity")
-    private BigDecimal transactionEntityDTOQuantity;
+    @JsonProperty("productCode")
+    private String transactionEntityDTOProductCode;
 
-    @JsonProperty("transactionTotalAmount")
-    private BigDecimal transactionEntityDTOTotalAmount;
+    @JsonProperty("customerName")
+    private String transactionEntityDTOCustomerName;
+
+    @JsonProperty("customerIdentityNumber")
+    private String transactionEntityDTOCustomerIdentityNumber;
+
+    @JsonProperty("customerPhoneNumber")
+    private String transactionEntityDTOCustomerPhoneNumber;
+
+    @JsonProperty("customerEmail")
+    private String transactionEntityDTOCustomerEmail;
+
+    @JsonProperty("customerAddress")
+    private String transactionEntityDTOCustomerAddress;
 
     @JsonProperty("transactionDate")
     private LocalDateTime transactionEntityDTODate;

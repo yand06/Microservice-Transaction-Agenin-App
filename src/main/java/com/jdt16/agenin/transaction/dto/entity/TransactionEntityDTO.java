@@ -33,11 +33,8 @@ public class TransactionEntityDTO {
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_PRODUCT_ID, nullable = false)
     private UUID transactionEntityDTOProductId;
 
-    @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_QUANTITY, nullable = false)
-    private BigDecimal transactionEntityDTOQuantity;
-
-    @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_TOTAL_AMOUNT, nullable = false)
-    private BigDecimal transactionEntityDTOTotalAmount;
+    @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_PRODUCT_CODE, nullable = false)
+    private String transactionEntityDTOProductCode;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_DATE, nullable = false)
     private LocalDateTime transactionEntityDTODate;

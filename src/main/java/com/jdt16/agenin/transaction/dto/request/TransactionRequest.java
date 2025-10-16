@@ -10,13 +10,18 @@ import java.math.BigDecimal;
 
 @Data
 public class TransactionRequest {
-    @NotNull
-    @Positive
-    @JsonProperty("transactionQuantity")
-    private BigDecimal transactionEntityDTOQuantity;
+    @JsonProperty("customerName")
+    private String transactionEntityDTOCustomerName;
 
-    @NotNull
-    @Positive
-    @JsonProperty("transactionTotalAmount")
-    private BigDecimal transactionEntityDTOTotalAmount;
+    @JsonProperty("customerIdentityNumber")
+    private String transactionEntityDTOCustomerIdentityNumber;
+
+    @JsonProperty("customerPhoneNumber")
+    private String transactionEntityDTOCustomerPhoneNumber;
+
+    @JsonProperty("customerEmail")
+    private String transactionEntityDTOCustomerEmail;
+
+    @JsonProperty("customerAddress")
+    private String transactionEntityDTOCustomerAddress;
 }

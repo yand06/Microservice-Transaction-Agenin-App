@@ -10,8 +10,7 @@ public class ColumnNameEntityUtility {
     public static final String COLUMN_TRANSACTION_CODE = "transaction_code";
     public static final String COLUMN_TRANSACTION_USER_ID = "id_user";
     public static final String COLUMN_TRANSACTION_PRODUCT_ID = "id_product";
-    public static final String COLUMN_TRANSACTION_QUANTITY = "transaction_quantity";
-    public static final String COLUMN_TRANSACTION_TOTAL_AMOUNT = "transaction_total_amount";
+    public static final String COLUMN_TRANSACTION_PRODUCT_CODE = "product_code";
     public static final String COLUMN_TRANSACTION_DATE = "transaction_date";
     public static final String COLUMN_TRANSACTION_STATUS = "transaction_status";
 
@@ -36,10 +35,17 @@ public class ColumnNameEntityUtility {
     public static final String COLUMN_COMMISSIONS_UPDATED_DATE = "commissions_updated_date";
 
     /* M_USERS_BALANCE */
-    public static final String COLUMN_USERS_BALANCE_ID = "users_balance_id";
+    public static final String COLUMN_USERS_BALANCE_ID = "user_balance_id";
     public static final String COLUMN_USERS_BALANCE_USER_ID = "id_user";
-    public static final String COLUMN_USER_BALANCE_AMOUNT = "users_balance_amount";
-    public static final String COLUMN_USER_BALANCE_LAST_UPDATE = "users_balance_last_update";
+    public static final String COLUMN_USER_BALANCE_AMOUNT = "user_balance_amount";
+    public static final String COLUMN_USER_BALANCE_LAST_UPDATE = "user_balance_last_updated";
+
+    /* M_USERS_BALANCE_HISTORICAL */
+    public static final String COLUMN_USERS_BALANCE_HISTORICAL_ID = "users_balance_historical_id";
+    public static final String COLUMN_USERS_BALANCE_HISTORICAL_AMOUNT = "balance_amount";
+    public static final String COLUMN_USER_BALANCE_HISTORICAL_TRANSACTION_ID = "transaction_id";
+    public static final String COLUMN_USER_BALANCE_HISTORICAL_CREATED_DATE = "created_date";
+    public static final String COLUMN_USER_BALANCE_HISTORICAL_USER_BALANCE_ID = "user_balance_id";
 
     /* M_USERS */
     public static final String COLUMN_USERS_ID = "user_id";
@@ -57,7 +63,7 @@ public class ColumnNameEntityUtility {
     public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_TRANSACTION_ID = "transaction_id";
     public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_NAME = "customer_name";
     public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_IDENTITY_NUMBER = "customer_identity_number";
-    public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_PHONE_NUMBER = "customer_phone_number";
+    public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_PHONE_NUMBER = "customer_phonenumber";
     public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_EMAIL = "customer_email";
     public static final String COLUMN_TRANSACTION_OPEN_BANK_ACCOUNT_CUSTOMER_ADDRESS = "customer_address";
 }

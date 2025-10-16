@@ -20,7 +20,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Table(name = TableNameEntityUtility.TABLE_PRODUCTS)
-public class ProductEntityDTO {
+public class ProductsEntityDTO {
     @Id
     @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_ID, nullable = false, updatable = false)
     private UUID productEntityDTOId;

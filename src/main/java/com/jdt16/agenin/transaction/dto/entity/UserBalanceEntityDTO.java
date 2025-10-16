@@ -11,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -22,14 +24,14 @@ import java.util.UUID;
 public class UserBalanceEntityDTO {
     @Id
     @Column(name = ColumnNameEntityUtility.COLUMN_USERS_BALANCE_ID, nullable = false, updatable = false)
-    private String userEntityDTOUserBalanceId;
+    private UUID userBalanceEntityDTOUserBalanceId;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_USERS_BALANCE_USER_ID, nullable = false, updatable = false)
-    private UUID userEntityDTOId;
+    private UUID userBalanceEntityDTOUserId;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_USER_BALANCE_AMOUNT, nullable = false)
-    private String userEntityDTOBalanceAmount;
+    private BigDecimal userBalanceEntityDTOBalanceAmount;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_USER_BALANCE_LAST_UPDATE, nullable = false)
-    private String userEntityDTOBalanceLastUpdate;
+    private LocalDateTime userBalanceEntityDTOBalanceLastUpdate;
 }

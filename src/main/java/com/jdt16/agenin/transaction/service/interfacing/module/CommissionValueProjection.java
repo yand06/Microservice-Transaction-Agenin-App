@@ -1,0 +1,8 @@
+package com.jdt16.agenin.transaction.service.interfacing.module;
+
+
+import java.math.BigDecimal;
+
+public interface CommissionValueProjection {
+    BigDecimal getCommissionsEntityDTOValue();
+}
