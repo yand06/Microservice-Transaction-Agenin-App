@@ -154,7 +154,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private UUID processUserCommission(UUID userId, UUID productId) {
-        BigDecimal commissionValue = getCommissionValue(productId);
+        BigDecimal commissionValue = getCommissionsValue(productId);
 
         UserBalanceEntityDTO userBalance = mUserBalanceRepositories
                 .findByUserBalanceEntityDTOUserId(userId)
@@ -187,7 +187,7 @@ public class TransactionServiceImpl implements TransactionService {
             UUID transactionId,
             UUID productId
     ) {
-        BigDecimal commissionValue = getCommissionValue(productId);
+        BigDecimal commissionValue = getCommissionsValue(productId);
         UserBalanceHistoricalEntityDTO historical = UserBalanceHistoricalEntityDTO.builder()
                 .userBalanceHistoricalEntityDTOId(UUID.randomUUID())
                 .userBalanceHistoricalEntityDTOUserBalanceId(userBalanceId)
@@ -213,7 +213,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .findReferenceUserIdByInviteeUserId(inviteeUserId)
                 .orElseThrow(() -> createReferralNotFoundException(inviteeUserId, inviteeUser));
 
-        BigDecimal commissionValue = getCommissionValue(productId);
+        BigDecimal commissionValue = getCommissionsValue(productId);
         UUID referenceUserBalanceId = processUserCommission(referenceUserId, productId);
         saveUserBalanceHistorical(referenceUserBalanceId, transactionId, productId);
 
@@ -267,7 +267,7 @@ public class TransactionServiceImpl implements TransactionService {
                 ));
     }
 
-    private BigDecimal getCommissionValue(UUID productId) {
+    private BigDecimal getCommissionsValue(UUID productId) {
         return mCommissionRepositories.findByCommissionsEntityDTOProductId(productId)
                 .map(CommissionValueProjection::getCommissionsEntityDTOValue)
                 .orElseThrow(() -> new CoreThrowHandlerException(
@@ -554,6 +554,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .productEntityDTOCode(productsEntityDTO.getProductEntityDTOCode())
                 .productEntityDTODesc(productsEntityDTO.getProductEntityDTODesc())
                 .productEntityDTOPrice(productsEntityDTO.getProductEntityDTOPrice())
+                .commissionsEntityDTOValue(getCommissionsValue(productsEntityDTO.getProductEntityDTOId()))
                 .build();
     }
 

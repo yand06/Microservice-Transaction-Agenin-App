@@ -20,4 +20,7 @@ public class ProductsResponse {
 
     @JsonProperty("productPrice")
     private BigDecimal productEntityDTOPrice;
+
+    @JsonProperty("commissionsValue")
+    private BigDecimal commissionsEntityDTOValue;
 }
