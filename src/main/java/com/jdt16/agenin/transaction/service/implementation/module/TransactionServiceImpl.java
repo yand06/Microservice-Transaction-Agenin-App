@@ -550,6 +550,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private ProductsResponse toProductsResponse(ProductsEntityDTO productsEntityDTO) {
         return ProductsResponse.builder()
+                .productEntityDTOId(productsEntityDTO.getProductEntityDTOId())
                 .productEntityDTOName(productsEntityDTO.getProductEntityDTOName())
                 .productEntityDTOCode(productsEntityDTO.getProductEntityDTOCode())
                 .productEntityDTODesc(productsEntityDTO.getProductEntityDTODesc())

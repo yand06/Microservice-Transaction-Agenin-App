@@ -5,10 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @Builder
 public class ProductsResponse {
+    @JsonProperty("productId")
+    private UUID productEntityDTOId;
+
     @JsonProperty("productName")
     private String productEntityDTOName;
 
