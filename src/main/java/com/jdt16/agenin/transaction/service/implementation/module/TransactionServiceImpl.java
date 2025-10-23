@@ -80,7 +80,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         TransactionOpenBankAccountEntityDTO bankAccountDetail = saveTransactionOpenBankAccount(transactionId, transactionRequest);
         UUID userBalanceId = processUserCommission(userId, productId);
-        
+
         saveUserBalanceHistorical(userBalanceId, transactionId, productId);
 
         UserEntityDTO userEntityDTO = mUserRepositories.findByUserEntityDTOId(userId)
@@ -497,6 +497,7 @@ public class TransactionServiceImpl implements TransactionService {
         UserBalanceResponse userBalanceResponse = UserBalanceResponse.builder()
                 .userBalanceEntityDTOUserId(userId)
                 .userBalanceEntityDTOUserAmount(balanceAfter)
+                .userBalanceEntityDTOUserWalletAmount(walletAfter)
                 .userBalanceEntityDTOLastUpdated(userBalance.getUserBalanceEntityDTOBalanceLastUpdate())
                 .build();
 
