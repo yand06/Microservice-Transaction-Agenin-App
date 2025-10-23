@@ -6,10 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -20,11 +17,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @Table(name = TableNameEntityUtility.TABLE_USER_BALANCE)
 public class UserBalanceEntityDTO {
     @Id
     @Column(name = ColumnNameEntityUtility.COLUMN_USERS_BALANCE_ID, nullable = false, updatable = false)
-    private UUID userBalanceEntityDTOUserBalanceId;
+    private UUID userBalanceEntityDTOId;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_USERS_BALANCE_USER_ID, nullable = false, updatable = false)
     private UUID userBalanceEntityDTOUserId;

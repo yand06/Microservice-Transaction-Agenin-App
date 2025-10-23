@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -35,14 +36,14 @@ public class ProductsEntityDTO {
     private String productEntityDTODesc;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_PRICE, nullable = false, updatable = false)
-    private String productEntityDTOPrice;
+    private BigDecimal productEntityDTOPrice;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_STATUS, nullable = false, updatable = false)
     private String productEntityDTOStatus;
 
-    @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_CREATED_DATE, nullable = false, updatable = false)
+    @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_CREATED_AT, nullable = false, updatable = false)
     private LocalDateTime productEntityDTOCreatedAt;
 
-    @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_UPDATED_DATE, nullable = false, updatable = false)
+    @Column(name = ColumnNameEntityUtility.COLUMN_PRODUCT_UPDATED_AT, nullable = false, updatable = false)
     private LocalDateTime productEntityDTOUpdatedAt;
 }

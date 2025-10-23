@@ -11,9 +11,11 @@ public class TableNameEntityUtility {
     public static final String TABLE_USERS_REFERRAL = "T_USERS_REFERRAL";
     public static final String TABLE_USER_BALANCE = "M_USER_BALANCE";
     public static final String TABLE_USER_BALANCE_HISTORICAL = "T_USERS_BALANCE_HISTORICAL";
+    public static final String TABLE_USER_WALLET = "M_USER_WALLET";
+    public static final String TABLE_USER_WALLET_HISTORICAL = "T_USERS_WALLET_HISTORICAL";
     public static final String TABLE_PRODUCTS = "M_PRODUCTS";
     public static final String TABLE_COMMISSION = "M_COMMISSION";
     public static final String TABLE_TRANSACTION = "M_TRANSACTION";
     public static final String TABLE_TRANSACTION_OPEN_BANK_ACCOUNT = "T_TRANSACTION_OPEN_BANK_ACCOUNT";
-    public static final String TABLE_AUDIT_LOGS = "AUDIT_LOGS";
+    public static final String TABLE_T_AUDIT_LOGS = "AUDIT_LOGS";
 }
