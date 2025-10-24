@@ -3,13 +3,9 @@ package com.jdt16.agenin.transaction.dto.entity;
 import com.jdt16.agenin.transaction.utility.ColumnNameEntityUtility;
 import com.jdt16.agenin.transaction.utility.TableNameEntityUtility;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @Table(name = TableNameEntityUtility.TABLE_TRANSACTION)
 public class TransactionEntityDTO {
     @Id
@@ -33,8 +30,11 @@ public class TransactionEntityDTO {
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_PRODUCT_ID, nullable = false)
     private UUID transactionEntityDTOProductId;
 
-    @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_PRODUCT_CODE, nullable = false)
-    private String transactionEntityDTOProductCode;
+    @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_PRODUCT_NAME, nullable = false)
+    private String transactionEntityDTOProductName;
+
+    @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_PRODUCT_PRICE, nullable = false)
+    private BigDecimal transactionEntityDTOProductPrice;
 
     @Column(name = ColumnNameEntityUtility.COLUMN_TRANSACTION_DATE, nullable = false)
     private LocalDateTime transactionEntityDTODate;

@@ -8,6 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface TUserBalanceRepositories extends JpaRepository<UserBalanceEntityDTO, UUID> {
+public interface MUserBalanceRepositories extends JpaRepository<UserBalanceEntityDTO, UUID> {
     Optional<UserBalanceEntityDTO> findByUserBalanceEntityDTOUserId(UUID userId);
 }

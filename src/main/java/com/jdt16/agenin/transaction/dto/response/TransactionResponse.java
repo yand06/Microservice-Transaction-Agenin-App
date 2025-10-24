@@ -2,6 +2,7 @@ package com.jdt16.agenin.transaction.dto.response;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
+@Builder
 public class TransactionResponse {
     @JsonProperty("transactionId")
     private UUID transactionEntityDTOId;

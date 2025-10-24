@@ -4,8 +4,10 @@ import com.jdt16.agenin.transaction.dto.entity.TransactionOpenBankAccountEntityD
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface TTransactionOpenBankAccountRepositories extends JpaRepository<TransactionOpenBankAccountEntityDTO, UUID> {
+    Optional<TransactionOpenBankAccountEntityDTO> findByTransactionOpenBankAccountEntityDTOTransactionId(UUID transactionId);
 }
