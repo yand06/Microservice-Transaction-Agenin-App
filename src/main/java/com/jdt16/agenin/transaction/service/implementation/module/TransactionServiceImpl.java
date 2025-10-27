@@ -35,6 +35,8 @@ import com.jdt16.agenin.transaction.utility.RequestContextUtil;
 import com.jdt16.agenin.transaction.utility.TableNameEntityUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +69,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Transactional(rollbackFor = CoreThrowHandlerException.class)
     @Override
+    @CacheEvict(value = "userBalance", key = "#userId")
     public RestApiResponse<TransactionResponse> inquiry(
             UUID userId,
             UUID productId,
@@ -269,6 +272,7 @@ public class TransactionServiceImpl implements TransactionService {
                 ));
     }
 
+    @Cacheable(value = "commissions", key = "#productId")
     private BigDecimal getCommissionsValue(UUID productId) {
         return mCommissionRepositories.findByCommissionsEntityDTOProductId(productId)
                 .map(CommissionValueProjection::getCommissionsEntityDTOValue)
@@ -384,6 +388,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Cacheable(value = "products", unless = "#result.restApiResponseResults.isEmpty()")
     public RestApiResponse<List<ProductsResponse>> getListProducts() {
         List<ProductsEntityDTO> productsEntityDTOList = mProductsRepositories.findAll();
 
@@ -441,6 +446,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(value = "userBalance", key = "#userId")
     public RestApiResponse<UserBalanceResponse> transactionCommissionToWallet(
             UUID userId,
             CommissionToWalletRequest commissionToWalletRequest
@@ -518,6 +524,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Cacheable(value = "userBalance", key = "#userId")
     public RestApiResponse<UserBalanceAndWalletResponse> getUserBalanceAndWallet(UUID userId) {
         UserBalanceEntityDTO userBalance = mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(userId)
                 .orElseThrow(() -> new CoreThrowHandlerException("User balance not found for user: " + userId));
