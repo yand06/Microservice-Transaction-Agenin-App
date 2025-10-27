@@ -2,6 +2,7 @@ package com.jdt16.agenin.transaction.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -13,4 +14,8 @@ public class CommissionToWalletRequest {
     @DecimalMin(value = "0.01")
     @JsonProperty("amountToWallet")
     private BigDecimal commissionToWalletAmount;
+
+    @NotBlank(message = "Password is required")
+    @JsonProperty("userPassword")
+    private String userEntityDTOPassword;
 }

@@ -1,5 +1,6 @@
 package com.jdt16.agenin.transaction.service.implementation.module;
 
+import com.jdt16.agenin.transaction.configuration.security.SecurityConfig;
 import com.jdt16.agenin.transaction.dto.entity.TransactionEntityDTO;
 import com.jdt16.agenin.transaction.dto.entity.TransactionOpenBankAccountEntityDTO;
 import com.jdt16.agenin.transaction.dto.entity.UserEntityDTO;
@@ -58,6 +59,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final AuditLogProducerService auditLogProducerService;
     private final TTransactionOpenBankAccountRepositories tTransactionOpenBankAccountRepositories;
     private final TUsersReferralRepositories tUsersReferralRepositories;
+    private final SecurityConfig securityConfig = new SecurityConfig();
     private final TUsersWalletHistoricalRepositories tUsersWalletHistoricalRepositories;
     private static final String TRANSACTION_CODE_PREFIX = "TRX_";
     private static final String TRANSACTION_STATUS_SUCCESS = "SUCCESS";
@@ -449,6 +451,13 @@ public class TransactionServiceImpl implements TransactionService {
         UUID roleId = userEntityDTO.getUserEntityDTORoleId();
         String roleName = userEntityDTO.getUserEntityDTORoleName();
 
+        validatePassword(
+                commissionToWalletRequest.getUserEntityDTOPassword(),
+                userEntityDTO.getUserEntityDTOPassword(),
+                userId,
+                commissionToWalletRequest.getCommissionToWalletAmount()
+        );
+
         BigDecimal transferAmount = commissionToWalletRequest.getCommissionToWalletAmount();
         if (transferAmount == null || transferAmount.compareTo(BigDecimal.ZERO) <= 0) {
             logFailedCommissionToWallet(userId, transferAmount, "Transfer amount must be greater than zero");
@@ -627,4 +636,12 @@ public class TransactionServiceImpl implements TransactionService {
                 RequestContextUtil.getClientIpAddress()
         );
     }
+
+    private void validatePassword(String rawPassword, String encodedPassword, UUID userId, BigDecimal amount) {
+        if (!securityConfig.passwordEncoder().matches(rawPassword, encodedPassword)) {
+            logFailedCommissionToWallet(userId, amount, "Invalid password");
+            throw new CoreThrowHandlerException("Invalid password");
+        }
+    }
+
 }
