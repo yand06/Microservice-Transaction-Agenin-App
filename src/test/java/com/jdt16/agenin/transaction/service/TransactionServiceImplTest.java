@@ -377,343 +377,343 @@ class TransactionServiceImplTest {
             verify(mCommissionRepositories, times(1)).findByCommissionsEntityDTOProductId(p2);
             verifyNoMoreInteractions(mProductsRepositories, mCommissionRepositories);
         }
+    }
+
+    @Nested
+    @DisplayName("getAllTransactionsByUser()")
+    class GetAllTransactionsByUser {
+
+        @Test
+        @DisplayName("200 OK (Positive): transactions exist → return sorted list with details")
+        void getAllTransactionsByUser_positive_success() {
+            UUID uid = userId;
+            UUID trx1 = UUID.randomUUID();
+            TransactionEntityDTO tx1 = TransactionEntityDTO.builder()
+                    .transactionEntityDTOId(trx1)
+                    .transactionEntityDTOUserId(uid)
+                    .transactionEntityDTOProductName("Open Bank Account BCA")
+                    .transactionEntityDTOProductPrice(new BigDecimal("100000"))
+                    .transactionEntityDTODate(LocalDateTime.now().minusDays(1))
+                    .transactionEntityDTOStatus("SUCCESS")
+                    .build();
+
+            UUID trx2 = UUID.randomUUID();
+            TransactionEntityDTO tx2 = TransactionEntityDTO.builder()
+                    .transactionEntityDTOId(trx2)
+                    .transactionEntityDTOUserId(uid)
+                    .transactionEntityDTOProductName("Open Bank Account BRI")
+                    .transactionEntityDTOProductPrice(new BigDecimal("50000"))
+                    .transactionEntityDTODate(LocalDateTime.now().minusDays(3))
+                    .transactionEntityDTOStatus("SUCCESS")
+                    .build();
+
+            when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uid)))
+                    .thenReturn(List.of(tx2, tx1));
+
+            TransactionOpenBankAccountEntityDTO oba1 = new TransactionOpenBankAccountEntityDTO();
+            oba1.setTransactionOpenBankAccountEntityDTOId(UUID.randomUUID());
+            oba1.setTransactionOpenBankAccountEntityDTOTransactionId(trx1);
+            oba1.setTransactionOpenBankAccountEntityDTOCustomerName("Alice");
+            oba1.setTransactionOpenBankAccountEntityDTOCustomerIdentityNumber("111222333");
+            oba1.setTransactionOpenBankAccountEntityDTOCustomerPhoneNumber("08123456789");
+            oba1.setTransactionOpenBankAccountEntityDTOCustomerEmail("alice@example.com");
+            oba1.setTransactionOpenBankAccountEntityDTOCustomerAddress("Jl. Mawar No. 1");
+
+            when(tTransactionOpenBankAccountRepositories
+                    .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx1)))
+                    .thenReturn(Optional.of(oba1));
+
+            when(tTransactionOpenBankAccountRepositories
+                    .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx2)))
+                    .thenReturn(Optional.empty());
+
+            RestApiResponse<List<CustomerOpenBankAccountResponse>> res =
+                    service.getAllTransactionsByUser(uid);
+
+            assertThat(res).isNotNull();
+            assertThat(res.getRestApiResponseCode()).isEqualTo(200);
+            assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET all transactions by user");
+            assertThat(res.getRestApiResponseResults()).isNotNull().hasSize(2);
+
+            CustomerOpenBankAccountResponse r1 = res.getRestApiResponseResults().get(0);
+            CustomerOpenBankAccountResponse r2 = res.getRestApiResponseResults().get(1);
+
+            assertThat(r1.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BCA");
+            assertThat(r1.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("100000");
+            assertThat(r1.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
+            assertThat(r1.getCustomerOpenBankAccountName()).isEqualTo("Alice");
+            assertThat(r1.getCustomerOpenBankAccountIdentityNumber()).isEqualTo("111222333");
+            assertThat(r1.getCustomerOpenBankAccountPhoneNumber()).isEqualTo("08123456789");
+            assertThat(r1.getCustomerOpenBankAccountEmail()).isEqualTo("alice@example.com");
+            assertThat(r1.getCustomerOpenBankAccountAddress()).isEqualTo("Jl. Mawar No. 1");
+
+            assertThat(r2.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BRI");
+            assertThat(r2.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("50000");
+            assertThat(r2.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
+            assertThat(r2.getCustomerOpenBankAccountName()).isNull();
+            assertThat(r2.getCustomerOpenBankAccountIdentityNumber()).isNull();
+            assertThat(r2.getCustomerOpenBankAccountPhoneNumber()).isNull();
+            assertThat(r2.getCustomerOpenBankAccountEmail()).isNull();
+            assertThat(r2.getCustomerOpenBankAccountAddress()).isNull();
+
+            verify(tTransactionRepositories, times(1))
+                    .findByTransactionEntityDTOUserId(eq(uid));
+            verify(tTransactionOpenBankAccountRepositories, times(1))
+                    .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx1));
+            verify(tTransactionOpenBankAccountRepositories, times(1))
+                    .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx2));
+            verifyNoMoreInteractions(tTransactionRepositories, tTransactionOpenBankAccountRepositories);
+        }
+
+        @Test
+        @DisplayName("200 OK (Negative): No transactions → return empty list")
+        void getAllTransactionsByUser_negative_empty() {
+            UUID uid = userId;
+            when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uid)))
+                    .thenReturn(Collections.emptyList());
+
+            RestApiResponse<List<CustomerOpenBankAccountResponse>> res =
+                    service.getAllTransactionsByUser(uid);
+
+            assertThat(res).isNotNull();
+            assertThat(res.getRestApiResponseCode()).isEqualTo(200);
+            assertThat(res.getRestApiResponseMessage()).isEqualTo("FAILED GET all transactions by user");
+            assertThat(res.getRestApiResponseResults()).isNotNull().isEmpty();
+
+            verify(tTransactionRepositories, times(1))
+                    .findByTransactionEntityDTOUserId(eq(uid));
+            verifyNoInteractions(tTransactionOpenBankAccountRepositories);
+            verifyNoMoreInteractions(tTransactionRepositories);
+        }
+    }
+
+    @Nested
+    @DisplayName("transactionCommissionToWallet()")
+    class TransactionCommissionToWallet {
+
+        private UserEntityDTO mockExistingUser() {
+            UserEntityDTO user = new UserEntityDTO();
+            user.setUserEntityDTOId(userId);
+            user.setUserEntityDTOFullName("Agent A");
+            user.setUserEntityDTORoleId(UUID.randomUUID());
+            user.setUserEntityDTORoleName("AGENT");
+            when(mUserRepositories.findByUserEntityDTOId(eq(userId))).thenReturn(Optional.of(user));
+            return user;
+        }
 
         @Nested
-        @DisplayName("getAllTransactionsByUser()")
-        class GetAllTransactionsByUser {
-
+        @DisplayName("Positive Cases")
+        class Positive {
             @Test
-            @DisplayName("200 OK (Positive): transactions exist → return sorted list with details")
-            void getAllTransactionsByUser_positive_success() {
-                UUID uid = userId;
-                UUID trx1 = UUID.randomUUID();
-                TransactionEntityDTO tx1 = TransactionEntityDTO.builder()
-                        .transactionEntityDTOId(trx1)
-                        .transactionEntityDTOUserId(uid)
-                        .transactionEntityDTOProductName("Open Bank Account BCA")
-                        .transactionEntityDTOProductPrice(new BigDecimal("100000"))
-                        .transactionEntityDTODate(LocalDateTime.now().minusDays(1))
-                        .transactionEntityDTOStatus("SUCCESS")
+            @DisplayName("200: successful transfer → decrease balance, increase wallet")
+            void success_existing_wallet() {
+                mockExistingUser();
+
+                BigDecimal transfer = new BigDecimal("25000");
+                CommissionToWalletRequest req = new CommissionToWalletRequest();
+                req.setCommissionToWalletAmount(transfer);
+
+                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                        .userBalanceEntityDTOId(UUID.randomUUID())
+                        .userBalanceEntityDTOUserId(userId)
+                        .userBalanceEntityDTOBalanceAmount(new BigDecimal("100000"))
+                        .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusDays(1))
                         .build();
 
-                UUID trx2 = UUID.randomUUID();
-                TransactionEntityDTO tx2 = TransactionEntityDTO.builder()
-                        .transactionEntityDTOId(trx2)
-                        .transactionEntityDTOUserId(uid)
-                        .transactionEntityDTOProductName("Open Bank Account BRI")
-                        .transactionEntityDTOProductPrice(new BigDecimal("50000"))
-                        .transactionEntityDTODate(LocalDateTime.now().minusDays(3))
-                        .transactionEntityDTOStatus("SUCCESS")
-                        .build();
+                UserWalletEntityDTO wallet = new UserWalletEntityDTO();
+                wallet.setUserWalletEntityDTOId(UUID.randomUUID());
+                wallet.setUserWalletEntityDTOUserId(userId);
+                wallet.setUserWalletEntityDTOAmount(new BigDecimal("5000"));
+                wallet.setUserWalletEntityDTOLastUpdate(LocalDateTime.now().minusDays(2));
 
-                when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uid)))
-                        .thenReturn(List.of(tx2, tx1));
+                when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
+                        .thenReturn(Optional.of(balance));
+                when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(userId)))
+                        .thenReturn(Optional.of(wallet));
 
-                TransactionOpenBankAccountEntityDTO oba1 = new TransactionOpenBankAccountEntityDTO();
-                oba1.setTransactionOpenBankAccountEntityDTOId(UUID.randomUUID());
-                oba1.setTransactionOpenBankAccountEntityDTOTransactionId(trx1);
-                oba1.setTransactionOpenBankAccountEntityDTOCustomerName("Alice");
-                oba1.setTransactionOpenBankAccountEntityDTOCustomerIdentityNumber("111222333");
-                oba1.setTransactionOpenBankAccountEntityDTOCustomerPhoneNumber("08123456789");
-                oba1.setTransactionOpenBankAccountEntityDTOCustomerEmail("alice@example.com");
-                oba1.setTransactionOpenBankAccountEntityDTOCustomerAddress("Jl. Mawar No. 1");
-
-                when(tTransactionOpenBankAccountRepositories
-                        .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx1)))
-                        .thenReturn(Optional.of(oba1));
-
-                when(tTransactionOpenBankAccountRepositories
-                        .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx2)))
-                        .thenReturn(Optional.empty());
-
-                RestApiResponse<List<CustomerOpenBankAccountResponse>> res =
-                        service.getAllTransactionsByUser(uid);
+                RestApiResponse<UserBalanceResponse> res =
+                        service.transactionCommissionToWallet(userId, req);
 
                 assertThat(res).isNotNull();
                 assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET all transactions by user");
-                assertThat(res.getRestApiResponseResults()).isNotNull().hasSize(2);
+                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS transfer commission to wallet");
+                assertThat(res.getRestApiResponseResults()).isNotNull();
+                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserId()).isEqualTo(userId);
+                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserAmount())
+                        .isEqualByComparingTo("75000"); // 100000 - 25000
 
-                CustomerOpenBankAccountResponse r1 = res.getRestApiResponseResults().get(0);
-                CustomerOpenBankAccountResponse r2 = res.getRestApiResponseResults().get(1);
+                ArgumentCaptor<UserBalanceEntityDTO> balCap = ArgumentCaptor.forClass(UserBalanceEntityDTO.class);
+                verify(mUserBalanceRepositories).save(balCap.capture());
+                assertThat(balCap.getValue().getUserBalanceEntityDTOBalanceAmount())
+                        .isEqualByComparingTo("75000");
 
-                assertThat(r1.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BCA");
-                assertThat(r1.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("100000");
-                assertThat(r1.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
-                assertThat(r1.getCustomerOpenBankAccountName()).isEqualTo("Alice");
-                assertThat(r1.getCustomerOpenBankAccountIdentityNumber()).isEqualTo("111222333");
-                assertThat(r1.getCustomerOpenBankAccountPhoneNumber()).isEqualTo("08123456789");
-                assertThat(r1.getCustomerOpenBankAccountEmail()).isEqualTo("alice@example.com");
-                assertThat(r1.getCustomerOpenBankAccountAddress()).isEqualTo("Jl. Mawar No. 1");
+                ArgumentCaptor<UserWalletEntityDTO> walCap = ArgumentCaptor.forClass(UserWalletEntityDTO.class);
+                verify(mUserWalletRepositories).save(walCap.capture());
+                assertThat(walCap.getValue().getUserWalletEntityDTOAmount())
+                        .isEqualByComparingTo("30000"); // 5000 + 25000
 
-                assertThat(r2.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BRI");
-                assertThat(r2.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("50000");
-                assertThat(r2.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
-                assertThat(r2.getCustomerOpenBankAccountName()).isNull();
-                assertThat(r2.getCustomerOpenBankAccountIdentityNumber()).isNull();
-                assertThat(r2.getCustomerOpenBankAccountPhoneNumber()).isNull();
-                assertThat(r2.getCustomerOpenBankAccountEmail()).isNull();
-                assertThat(r2.getCustomerOpenBankAccountAddress()).isNull();
+                verify(tUsersWalletHistoricalRepositories)
+                        .save(any(UserWalletHistoricalEntityDTO.class));
 
-                verify(tTransactionRepositories, times(1))
-                        .findByTransactionEntityDTOUserId(eq(uid));
-                verify(tTransactionOpenBankAccountRepositories, times(1))
-                        .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx1));
-                verify(tTransactionOpenBankAccountRepositories, times(1))
-                        .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx2));
-                verifyNoMoreInteractions(tTransactionRepositories, tTransactionOpenBankAccountRepositories);
-            }
-
-            @Test
-            @DisplayName("200 OK (Negative): No transactions → return empty list")
-            void getAllTransactionsByUser_negative_empty() {
-                UUID uid = userId;
-                when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uid)))
-                        .thenReturn(Collections.emptyList());
-
-                RestApiResponse<List<CustomerOpenBankAccountResponse>> res =
-                        service.getAllTransactionsByUser(uid);
-
-                assertThat(res).isNotNull();
-                assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage()).isEqualTo("FAILED GET all transactions by user");
-                assertThat(res.getRestApiResponseResults()).isNotNull().isEmpty();
-
-                verify(tTransactionRepositories, times(1))
-                        .findByTransactionEntityDTOUserId(eq(uid));
-                verifyNoInteractions(tTransactionOpenBankAccountRepositories);
-                verifyNoMoreInteractions(tTransactionRepositories);
+                verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
+                verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(userId));
             }
         }
 
         @Nested
-        @DisplayName("transactionCommissionToWallet()")
-        class TransactionCommissionToWallet {
+        @DisplayName("Negative Cases")
+        class Negative {
+            @Test
+            @DisplayName("400: amount null/zero")
+            void amount_invalid_throws() {
+                mockExistingUser();
 
-            private UserEntityDTO mockExistingUser() {
-                UserEntityDTO user = new UserEntityDTO();
-                user.setUserEntityDTOId(userId);
-                user.setUserEntityDTOFullName("Agent A");
-                user.setUserEntityDTORoleId(UUID.randomUUID());
-                user.setUserEntityDTORoleName("AGENT");
-                when(mUserRepositories.findByUserEntityDTOId(eq(userId))).thenReturn(Optional.of(user));
-                return user;
+                CommissionToWalletRequest req = new CommissionToWalletRequest();
+                req.setCommissionToWalletAmount(BigDecimal.ZERO);
+
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                        .isInstanceOf(CoreThrowHandlerException.class)
+                        .hasMessageContaining("greater than zero");
+
+                verifyNoInteractions(mUserBalanceRepositories, mUserWalletRepositories, tUsersWalletHistoricalRepositories);
             }
 
-            @Nested
-            @DisplayName("Positive Cases")
-            class Positive {
-                @Test
-                @DisplayName("200: successful transfer → decrease balance, increase wallet")
-                void success_existing_wallet() {
-                    mockExistingUser();
+            @Test
+            @DisplayName("404: user balance not found")
+            void balance_not_found_throws() {
+                mockExistingUser();
 
-                    BigDecimal transfer = new BigDecimal("25000");
-                    CommissionToWalletRequest req = new CommissionToWalletRequest();
-                    req.setCommissionToWalletAmount(transfer);
+                CommissionToWalletRequest req = new CommissionToWalletRequest();
+                req.setCommissionToWalletAmount(new BigDecimal("10000"));
 
-                    UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
-                            .userBalanceEntityDTOId(UUID.randomUUID())
-                            .userBalanceEntityDTOUserId(userId)
-                            .userBalanceEntityDTOBalanceAmount(new BigDecimal("100000"))
-                            .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusDays(1))
-                            .build();
+                when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
+                        .thenReturn(Optional.empty());
 
-                    UserWalletEntityDTO wallet = new UserWalletEntityDTO();
-                    wallet.setUserWalletEntityDTOId(UUID.randomUUID());
-                    wallet.setUserWalletEntityDTOUserId(userId);
-                    wallet.setUserWalletEntityDTOAmount(new BigDecimal("5000"));
-                    wallet.setUserWalletEntityDTOLastUpdate(LocalDateTime.now().minusDays(2));
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                        .isInstanceOf(CoreThrowHandlerException.class)
+                        .hasMessageContaining("User balance not found");
 
-                    when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
-                            .thenReturn(Optional.of(balance));
-                    when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(userId)))
-                            .thenReturn(Optional.of(wallet));
-
-                    RestApiResponse<UserBalanceResponse> res =
-                            service.transactionCommissionToWallet(userId, req);
-
-                    assertThat(res).isNotNull();
-                    assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                    assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS transfer commission to wallet");
-                    assertThat(res.getRestApiResponseResults()).isNotNull();
-                    assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserId()).isEqualTo(userId);
-                    assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserAmount())
-                            .isEqualByComparingTo("75000"); // 100000 - 25000
-
-                    ArgumentCaptor<UserBalanceEntityDTO> balCap = ArgumentCaptor.forClass(UserBalanceEntityDTO.class);
-                    verify(mUserBalanceRepositories).save(balCap.capture());
-                    assertThat(balCap.getValue().getUserBalanceEntityDTOBalanceAmount())
-                            .isEqualByComparingTo("75000");
-
-                    ArgumentCaptor<UserWalletEntityDTO> walCap = ArgumentCaptor.forClass(UserWalletEntityDTO.class);
-                    verify(mUserWalletRepositories).save(walCap.capture());
-                    assertThat(walCap.getValue().getUserWalletEntityDTOAmount())
-                            .isEqualByComparingTo("30000"); // 5000 + 25000
-
-                    verify(tUsersWalletHistoricalRepositories)
-                            .save(any(UserWalletHistoricalEntityDTO.class));
-
-                    verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
-                    verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(userId));
-                }
+                verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
+                verifyNoMoreInteractions(mUserBalanceRepositories);
+                verifyNoInteractions(mUserWalletRepositories, tUsersWalletHistoricalRepositories);
             }
 
-            @Nested
-            @DisplayName("Negative Cases")
-            class Negative {
-                @Test
-                @DisplayName("400: amount null/zero")
-                void amount_invalid_throws() {
-                    mockExistingUser();
+            @Test
+            @DisplayName("400: commission balance insufficient")
+            void insufficient_balance_throws() {
+                mockExistingUser();
 
-                    CommissionToWalletRequest req = new CommissionToWalletRequest();
-                    req.setCommissionToWalletAmount(BigDecimal.ZERO);
+                CommissionToWalletRequest req = new CommissionToWalletRequest();
+                req.setCommissionToWalletAmount(new BigDecimal("20000"));
 
-                    assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
-                            .isInstanceOf(CoreThrowHandlerException.class)
-                            .hasMessageContaining("greater than zero");
+                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                        .userBalanceEntityDTOId(UUID.randomUUID())
+                        .userBalanceEntityDTOUserId(userId)
+                        .userBalanceEntityDTOBalanceAmount(new BigDecimal("15000"))
+                        .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusDays(1))
+                        .build();
 
-                    verifyNoInteractions(mUserBalanceRepositories, mUserWalletRepositories, tUsersWalletHistoricalRepositories);
-                }
+                when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
+                        .thenReturn(Optional.of(balance));
 
-                @Test
-                @DisplayName("404: user balance not found")
-                void balance_not_found_throws() {
-                    mockExistingUser();
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                        .isInstanceOf(CoreThrowHandlerException.class)
+                        .hasMessageContaining("Insufficient commission balance");
 
-                    CommissionToWalletRequest req = new CommissionToWalletRequest();
-                    req.setCommissionToWalletAmount(new BigDecimal("10000"));
+                verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
+                verifyNoMoreInteractions(mUserBalanceRepositories);
+                verifyNoInteractions(mUserWalletRepositories, tUsersWalletHistoricalRepositories);
+            }
+        }
+    }
 
-                    when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
-                            .thenReturn(Optional.empty());
+    @Nested
+    @DisplayName("getUserBalanceAndWallet")
+    class GetUserBalanceAndWallet {
+        @Nested
+        @DisplayName("Positive Cases")
+        class Positive {
+            @Test
+            @DisplayName("200 OK: returns balance & wallet amounts")
+            void getUserBalanceAndWallet_success() {
+                UUID uid = userId; // reuse
+                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                        .userBalanceEntityDTOId(UUID.randomUUID())
+                        .userBalanceEntityDTOUserId(uid)
+                        .userBalanceEntityDTOBalanceAmount(new BigDecimal("150000"))
+                        .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusHours(1))
+                        .build();
 
-                    assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
-                            .isInstanceOf(CoreThrowHandlerException.class)
-                            .hasMessageContaining("User balance not found");
+                UserWalletEntityDTO wallet = UserWalletEntityDTO.builder()
+                        .userWalletEntityDTOId(UUID.randomUUID())
+                        .userWalletEntityDTOUserId(uid)
+                        .userWalletEntityDTOAmount(new BigDecimal("27500"))
+                        .userWalletEntityDTOLastUpdate(LocalDateTime.now().minusMinutes(10))
+                        .build();
 
-                    verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
-                    verifyNoMoreInteractions(mUserBalanceRepositories);
-                    verifyNoInteractions(mUserWalletRepositories, tUsersWalletHistoricalRepositories);
-                }
+                when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
+                        .thenReturn(Optional.of(balance));
+                when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(uid)))
+                        .thenReturn(Optional.of(wallet));
 
-                @Test
-                @DisplayName("400: commission balance insufficient")
-                void insufficient_balance_throws() {
-                    mockExistingUser();
+                RestApiResponse<UserBalanceAndWalletResponse> res =
+                        service.getUserBalanceAndWallet(uid);
 
-                    CommissionToWalletRequest req = new CommissionToWalletRequest();
-                    req.setCommissionToWalletAmount(new BigDecimal("20000"));
+                assertThat(res).isNotNull();
+                assertThat(res.getRestApiResponseCode()).isEqualTo(200);
+                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET user balance and wallet");
+                assertThat(res.getRestApiResponseResults()).isNotNull();
+                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOAmount())
+                        .isEqualByComparingTo("150000");
+                assertThat(res.getRestApiResponseResults().getUserWalletEntityDTOAmount())
+                        .isEqualByComparingTo("27500");
 
-                    UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
-                            .userBalanceEntityDTOId(UUID.randomUUID())
-                            .userBalanceEntityDTOUserId(userId)
-                            .userBalanceEntityDTOBalanceAmount(new BigDecimal("15000"))
-                            .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusDays(1))
-                            .build();
+                verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
+                verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(uid));
+                verifyNoMoreInteractions(mUserBalanceRepositories, mUserWalletRepositories);
+            }
+        }
 
-                    when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
-                            .thenReturn(Optional.of(balance));
+        @Nested
+        @DisplayName("Negative Cases")
+        class Negative {
+            @Test
+            @DisplayName("404: throws when user balance not found")
+            void getUserBalanceAndWallet_balanceNotFound_throws() {
+                UUID uid = userId;
+                when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
+                        .thenReturn(Optional.empty());
 
-                    assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
-                            .isInstanceOf(CoreThrowHandlerException.class)
-                            .hasMessageContaining("Insufficient commission balance");
+                assertThatThrownBy(() -> service.getUserBalanceAndWallet(uid))
+                        .isInstanceOf(CoreThrowHandlerException.class)
+                        .hasMessageContaining("User balance not found for user: " + uid);
 
-                    verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
-                    verifyNoMoreInteractions(mUserBalanceRepositories);
-                    verifyNoInteractions(mUserWalletRepositories, tUsersWalletHistoricalRepositories);
-                }
+                verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
+                verifyNoInteractions(mUserWalletRepositories);
             }
 
-            @Nested
-            @DisplayName("getUserBalanceAndWallet")
-            class GetUserBalanceAndWallet {
-                @Nested
-                @DisplayName("Positive Cases")
-                class Positive {
-                    @Test
-                    @DisplayName("200 OK: returns balance & wallet amounts")
-                    void getUserBalanceAndWallet_success() {
-                        UUID uid = userId; // reuse
-                        UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
-                                .userBalanceEntityDTOId(UUID.randomUUID())
-                                .userBalanceEntityDTOUserId(uid)
-                                .userBalanceEntityDTOBalanceAmount(new BigDecimal("150000"))
-                                .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusHours(1))
-                                .build();
+            @Test
+            @DisplayName("404: throws when user wallet not found")
+            void getUserBalanceAndWallet_walletNotFound_throws() {
+                UUID uid = userId;
+                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                        .userBalanceEntityDTOId(UUID.randomUUID())
+                        .userBalanceEntityDTOUserId(uid)
+                        .userBalanceEntityDTOBalanceAmount(new BigDecimal("50000"))
+                        .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now())
+                        .build();
 
-                        UserWalletEntityDTO wallet = UserWalletEntityDTO.builder()
-                                .userWalletEntityDTOId(UUID.randomUUID())
-                                .userWalletEntityDTOUserId(uid)
-                                .userWalletEntityDTOAmount(new BigDecimal("27500"))
-                                .userWalletEntityDTOLastUpdate(LocalDateTime.now().minusMinutes(10))
-                                .build();
+                when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
+                        .thenReturn(Optional.of(balance));
+                when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(uid)))
+                        .thenReturn(Optional.empty());
 
-                        when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
-                                .thenReturn(Optional.of(balance));
-                        when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(uid)))
-                                .thenReturn(Optional.of(wallet));
+                assertThatThrownBy(() -> service.getUserBalanceAndWallet(uid))
+                        .isInstanceOf(CoreThrowHandlerException.class)
+                        .hasMessageContaining("User wallet not found for user: " + uid);
 
-                        RestApiResponse<UserBalanceAndWalletResponse> res =
-                                service.getUserBalanceAndWallet(uid);
-
-                        assertThat(res).isNotNull();
-                        assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                        assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET user balance and wallet");
-                        assertThat(res.getRestApiResponseResults()).isNotNull();
-                        assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOAmount())
-                                .isEqualByComparingTo("150000");
-                        assertThat(res.getRestApiResponseResults().getUserWalletEntityDTOAmount())
-                                .isEqualByComparingTo("27500");
-
-                        verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
-                        verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(uid));
-                        verifyNoMoreInteractions(mUserBalanceRepositories, mUserWalletRepositories);
-                    }
-                }
-
-                @Nested
-                @DisplayName("Negative Cases")
-                class Negative {
-                    @Test
-                    @DisplayName("404: throws when user balance not found")
-                    void getUserBalanceAndWallet_balanceNotFound_throws() {
-                        UUID uid = userId;
-                        when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
-                                .thenReturn(Optional.empty());
-
-                        assertThatThrownBy(() -> service.getUserBalanceAndWallet(uid))
-                                .isInstanceOf(CoreThrowHandlerException.class)
-                                .hasMessageContaining("User balance not found for user: " + uid);
-
-                        verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
-                        verifyNoInteractions(mUserWalletRepositories);
-                    }
-
-                    @Test
-                    @DisplayName("404: throws when user wallet not found")
-                    void getUserBalanceAndWallet_walletNotFound_throws() {
-                        UUID uid = userId;
-                        UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
-                                .userBalanceEntityDTOId(UUID.randomUUID())
-                                .userBalanceEntityDTOUserId(uid)
-                                .userBalanceEntityDTOBalanceAmount(new BigDecimal("50000"))
-                                .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now())
-                                .build();
-
-                        when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
-                                .thenReturn(Optional.of(balance));
-                        when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(uid)))
-                                .thenReturn(Optional.empty());
-
-                        assertThatThrownBy(() -> service.getUserBalanceAndWallet(uid))
-                                .isInstanceOf(CoreThrowHandlerException.class)
-                                .hasMessageContaining("User wallet not found for user: " + uid);
-
-                        verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
-                        verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(uid));
-                    }
-                }
+                verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
+                verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(uid));
             }
         }
     }
