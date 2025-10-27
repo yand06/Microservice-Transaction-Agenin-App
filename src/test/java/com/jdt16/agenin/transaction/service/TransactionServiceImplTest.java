@@ -1,5 +1,6 @@
 package com.jdt16.agenin.transaction.service;
 
+import com.jdt16.agenin.transaction.configuration.security.SecurityConfig;
 import com.jdt16.agenin.transaction.dto.entity.*;
 import com.jdt16.agenin.transaction.dto.exception.CoreThrowHandlerException;
 import com.jdt16.agenin.transaction.dto.request.CommissionToWalletRequest;
@@ -21,6 +22,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -43,7 +47,7 @@ class TransactionServiceImplTest {
     @Mock
     private MUserBalanceRepositories mUserBalanceRepositories;
     @Mock
-    private MUserWalletRepositories mUserWalletRepositories; // tidak dipakai di inquiry()
+    private MUserWalletRepositories mUserWalletRepositories;
     @Mock
     private TUsersBalanceHistoricalRepositories tUsersBalanceHistoricalRepositories;
     @Mock
@@ -53,15 +57,20 @@ class TransactionServiceImplTest {
     @Mock
     private TUsersReferralRepositories tUsersReferralRepositories;
     @Mock
-    private TUsersWalletHistoricalRepositories tUsersWalletHistoricalRepositories; // tidak dipakai di inquiry()
+    private TUsersWalletHistoricalRepositories tUsersWalletHistoricalRepositories;
     @Mock
     private AuditLogProducerService auditLogProducerService;
+    @Mock
+    private SecurityConfig securityConfig;
 
     private TransactionService service;
 
     private UUID userId;
     private UUID parentUserId;
     private UUID productId;
+
+    private final String RAW_PASSWORD = "Password123!";
+    private PasswordEncoder realEncoder;
 
     @BeforeEach
     void setUp() {
@@ -78,10 +87,41 @@ class TransactionServiceImplTest {
                 tUsersReferralRepositories,
                 tUsersWalletHistoricalRepositories
         );
+
+        realEncoder = new BCryptPasswordEncoder();
+
+        ReflectionTestUtils.setField(service, "securityConfig", securityConfig);
+        when(securityConfig.passwordEncoder()).thenReturn(realEncoder);
+
         userId = UUID.randomUUID();
         productId = UUID.randomUUID();
         parentUserId = UUID.randomUUID();
     }
+
+    private UserEntityDTO mockExistingUser() {
+        UserEntityDTO user = new UserEntityDTO();
+        user.setUserEntityDTOId(userId);
+        user.setUserEntityDTOFullName("Agent A");
+        user.setUserEntityDTORoleId(UUID.randomUUID());
+        user.setUserEntityDTORoleName("AGENT");
+
+        String encoded = realEncoder.encode(RAW_PASSWORD);
+        user.setUserEntityDTOPassword(encoded);
+
+        assert encoded != null && !encoded.isEmpty();
+
+        when(mUserRepositories.findByUserEntityDTOId(eq(userId)))
+                .thenReturn(Optional.of(user));
+        return user;
+    }
+
+    private CommissionToWalletRequest makeRequest(BigDecimal amount, String rawPassword) {
+        CommissionToWalletRequest req = new CommissionToWalletRequest();
+        req.setCommissionToWalletAmount(amount);
+        req.setUserEntityDTOPassword(rawPassword);
+        return req;
+    }
+
 
     @BeforeEach
     void commonSaves() {
@@ -491,27 +531,17 @@ class TransactionServiceImplTest {
     @DisplayName("transactionCommissionToWallet()")
     class TransactionCommissionToWallet {
 
-        private UserEntityDTO mockExistingUser() {
-            UserEntityDTO user = new UserEntityDTO();
-            user.setUserEntityDTOId(userId);
-            user.setUserEntityDTOFullName("Agent A");
-            user.setUserEntityDTORoleId(UUID.randomUUID());
-            user.setUserEntityDTORoleName("AGENT");
-            when(mUserRepositories.findByUserEntityDTOId(eq(userId))).thenReturn(Optional.of(user));
-            return user;
-        }
-
         @Nested
         @DisplayName("Positive Cases")
         class Positive {
+
             @Test
-            @DisplayName("200: successful transfer → decrease balance, increase wallet")
+            @DisplayName("200: successful transfer → decrease balance, increase wallet (existing wallet)")
             void success_existing_wallet() {
                 mockExistingUser();
 
                 BigDecimal transfer = new BigDecimal("25000");
-                CommissionToWalletRequest req = new CommissionToWalletRequest();
-                req.setCommissionToWalletAmount(transfer);
+                CommissionToWalletRequest req = makeRequest(transfer, RAW_PASSWORD);
 
                 UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
                         .userBalanceEntityDTOId(UUID.randomUUID())
@@ -536,45 +566,71 @@ class TransactionServiceImplTest {
 
                 assertThat(res).isNotNull();
                 assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS transfer commission to wallet");
+                assertThat(res.getRestApiResponseMessage())
+                        .isEqualTo("SUCCESS transfer commission to wallet");
                 assertThat(res.getRestApiResponseResults()).isNotNull();
-                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserId()).isEqualTo(userId);
+                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserId())
+                        .isEqualTo(userId);
                 assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserAmount())
                         .isEqualByComparingTo("75000"); // 100000 - 25000
+                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserWalletAmount())
+                        .isEqualByComparingTo("30000"); // 5000 + 25000
 
                 ArgumentCaptor<UserBalanceEntityDTO> balCap = ArgumentCaptor.forClass(UserBalanceEntityDTO.class);
                 verify(mUserBalanceRepositories).save(balCap.capture());
                 assertThat(balCap.getValue().getUserBalanceEntityDTOBalanceAmount())
                         .isEqualByComparingTo("75000");
+                assertThat(balCap.getValue().getUserBalanceEntityDTOBalanceLastUpdate())
+                        .isNotNull();
 
                 ArgumentCaptor<UserWalletEntityDTO> walCap = ArgumentCaptor.forClass(UserWalletEntityDTO.class);
                 verify(mUserWalletRepositories).save(walCap.capture());
                 assertThat(walCap.getValue().getUserWalletEntityDTOAmount())
-                        .isEqualByComparingTo("30000"); // 5000 + 25000
+                        .isEqualByComparingTo("30000");
+                assertThat(walCap.getValue().getUserWalletEntityDTOLastUpdate())
+                        .isNotNull();
 
                 verify(tUsersWalletHistoricalRepositories)
                         .save(any(UserWalletHistoricalEntityDTO.class));
 
+                verify(mUserRepositories).findByUserEntityDTOId(eq(userId));
                 verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
                 verify(mUserWalletRepositories).findByUserWalletEntityDTOUserId(eq(userId));
+                verifyNoMoreInteractions(mUserRepositories, mUserBalanceRepositories, mUserWalletRepositories);
             }
         }
 
         @Nested
         @DisplayName("Negative Cases")
         class Negative {
+
+            @Test
+            @DisplayName("401/400: invalid password → stop before reading balance/wallet")
+            void invalid_password_throws() {
+                mockExistingUser();
+
+                CommissionToWalletRequest req = makeRequest(new BigDecimal("10000"), "WrongPassword!");
+
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                        .isInstanceOf(CoreThrowHandlerException.class)
+                        .hasMessageContaining("Invalid password");
+
+                verify(mUserRepositories).findByUserEntityDTOId(eq(userId));
+                verifyNoInteractions(mUserBalanceRepositories, mUserWalletRepositories, tUsersWalletHistoricalRepositories);
+            }
+
             @Test
             @DisplayName("400: amount null/zero")
             void amount_invalid_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = new CommissionToWalletRequest();
-                req.setCommissionToWalletAmount(BigDecimal.ZERO);
+                CommissionToWalletRequest req = makeRequest(BigDecimal.ZERO, RAW_PASSWORD);
 
                 assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("greater than zero");
 
+                verify(mUserRepositories).findByUserEntityDTOId(eq(userId));
                 verifyNoInteractions(mUserBalanceRepositories, mUserWalletRepositories, tUsersWalletHistoricalRepositories);
             }
 
@@ -583,8 +639,7 @@ class TransactionServiceImplTest {
             void balance_not_found_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = new CommissionToWalletRequest();
-                req.setCommissionToWalletAmount(new BigDecimal("10000"));
+                CommissionToWalletRequest req = makeRequest(new BigDecimal("10000"), RAW_PASSWORD);
 
                 when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
                         .thenReturn(Optional.empty());
@@ -593,18 +648,18 @@ class TransactionServiceImplTest {
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("User balance not found");
 
+                verify(mUserRepositories).findByUserEntityDTOId(eq(userId));
                 verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
                 verifyNoMoreInteractions(mUserBalanceRepositories);
                 verifyNoInteractions(mUserWalletRepositories, tUsersWalletHistoricalRepositories);
             }
 
             @Test
-            @DisplayName("400: commission balance insufficient")
+            @DisplayName("400: commission balance insufficient (Your balance is less than the transfer amount.)")
             void insufficient_balance_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = new CommissionToWalletRequest();
-                req.setCommissionToWalletAmount(new BigDecimal("20000"));
+                CommissionToWalletRequest req = makeRequest(new BigDecimal("20000"), RAW_PASSWORD);
 
                 UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
                         .userBalanceEntityDTOId(UUID.randomUUID())
@@ -620,6 +675,7 @@ class TransactionServiceImplTest {
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("Insufficient commission balance");
 
+                verify(mUserRepositories).findByUserEntityDTOId(eq(userId));
                 verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(userId));
                 verifyNoMoreInteractions(mUserBalanceRepositories);
                 verifyNoInteractions(mUserWalletRepositories, tUsersWalletHistoricalRepositories);
