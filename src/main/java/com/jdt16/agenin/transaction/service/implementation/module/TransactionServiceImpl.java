@@ -35,8 +35,10 @@ import com.jdt16.agenin.transaction.utility.RequestContextUtil;
 import com.jdt16.agenin.transaction.utility.TableNameEntityUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +51,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 @Service
+@CacheConfig(cacheNames = "transactions")
 public class TransactionServiceImpl implements TransactionService {
 
     private final MUserRepositories mUserRepositories;
@@ -69,7 +72,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Transactional(rollbackFor = CoreThrowHandlerException.class)
     @Override
-    @CacheEvict(value = "userBalance", key = "#userId")
+    @Caching(evict = {
+            @CacheEvict(value = "transactions", allEntries = true),
+            @CacheEvict(value = "transactionHistory", key = "#userId"),
+            @CacheEvict(value = "userBalance", key = "#userId")
+    })
     public RestApiResponse<TransactionResponse> inquiry(
             UUID userId,
             UUID productId,
@@ -404,6 +411,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Cacheable(value = "transactionHistory", key = "#userId", unless = "#result.restApiResponseResults.isEmpty()")
     public RestApiResponse<List<CustomerOpenBankAccountResponse>> getAllTransactionsByUser(UUID userId) {
         List<TransactionEntityDTO> transactionEntityDTOS = tTransactionRepositories.findByTransactionEntityDTOUserId(userId);
         if (transactionEntityDTOS.isEmpty()) {

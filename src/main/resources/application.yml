@@ -2,12 +2,23 @@ spring:
   application:
     name: AGENIN_TRANSACTION
     version: 1.0.0
+
   banner:
     location: classpath:/banner-text.txt
-  dataSource:
+
+  # FIX: datasource not dataSource
+  datasource:
     url: jdbc:postgresql://${AGENIN_DB_HOST}:${AGENIN_DB_PORT}/${AGENIN_DB_NAME}
     username: ${AGENIN_DB_USERNAME}
     password: ${AGENIN_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
   jpa:
     properties:
       hibernate:
@@ -19,7 +30,32 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
       ddl-auto: none
 
-  #KAFKA CONFIGURATION
+  # Redis Configuration
+  data:
+    redis:
+      host: ${AGENIN_REDIS_HOST}
+      port: ${AGENIN_REDIS_PORT}
+      password: ${AGENIN_REDIS_PASSWORD}
+      timeout: 60s
+      connect-timeout: 5s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 10s
+          time-between-eviction-runs: 60s
+        shutdown-timeout: 100ms
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000ms
+      cache-null-values: false
+      enable-statistics: true
+
+  # KAFKA CONFIGURATION
   kafka:
     bootstrap-servers: ${AGENIN_BOOTSTRAP_KFK_SERVER}
     consumer:
@@ -45,52 +81,52 @@ spring:
             value:
               delegate:
                 class: org.springframework.kafka.common.serialization.StringDeserializer
-          #KAFKA TRUSTED PACKAGES FOR JSON DESERIALIZATION AND DEFAULT VALUE TYPE
-          json:
-            trusted:
-              packages: "*"
-            value:
-              default-type: com.jdt16.agenin.transaction.dto.response.RestApiResponse
+        # KAFKA TRUSTED PACKAGES FOR JSON DESERIALIZATION
+        json:
+          trusted:
+            packages: "*"
+          value:
+            default-type: com.jdt16.agenin.transaction.dto.response.RestApiResponse
 
-  #   Redis Configuration
-  data:
+# Management & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
     redis:
-      host: ${AGENIN_REDIS_HOST}
-      port: ${AGENIN_REDIS_PORT}
-      password: ${AGENIN_REDIS_PASSWORD}
-      timeout: 60000
+      enabled: true
+    db:
+      enabled: true
 
-  #   Cache Configuration
-  cache:
-    type: redis
-    redis:
-      time-to-live: 600000
-      cache-null-values: false
-#LOGGING
+# LOGGING
 logging:
   level:
+    root: INFO
+    com.jdt16.agenin.transaction: DEBUG
     org:
       springframework:
         kafka: INFO
-        listener:
-          container: INFO
+        cache: DEBUG
       apache:
         kafka: INFO
-        clients:
-          consumer: INFO
-#REQUEST TOPIC
+
+# REQUEST TOPIC
 request-topic:
   create-transaction-topic: create-transaction-po
   create-log-topic: create-log-po
-#request-reply-topic:
-#  create-transaction-topic: create-transaction-co
-#  create-log-topic: create-log-co
-#KAFKA
+
+# KAFKA CONNECTOR
 connector:
   environment: ${AGENIN_CONNECTOR_KFK_ENV}
-kafka:
-  bootstrap-servers: ${AGENIN_BOOTSTRAP_KFK_SERVER}
-  consumer-group: ${AGENIN_CONSUMER_GROUP}
+  kafka:
+    bootstrap-servers: ${AGENIN_BOOTSTRAP_KFK_SERVER}
+    consumer-group: ${AGENIN_CONSUMER_GROUP}
 
 server:
   port: 8282
