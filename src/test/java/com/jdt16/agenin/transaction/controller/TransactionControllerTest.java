@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -37,16 +38,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TransactionControllerTest {
 
     @Autowired
-    private MockMvc mvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper om;
+    private ObjectMapper objectMapper;
 
     @MockBean
     private TransactionService transactionService;
 
-    private static final String HDR_USER = "X-USER-ID";
-    private static final String HDR_PRODUCT = "X-PRODUCT-ID";
+    private static final String HEADER_USER = "X-USER-ID";
+    private static final String HEADER_PRODUCT = "X-PRODUCT-ID";
 
     private static <T> RestApiResponse<?> okResponseTyped(T results) {
         RestApiResponse<T> body = new RestApiResponse<>();
@@ -73,22 +74,22 @@ class TransactionControllerTest {
             UUID userId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
 
-            TransactionRequest req = new TransactionRequest();
+            TransactionRequest transactionRequest = new TransactionRequest();
 
-            TransactionResponse trxResp = mock(TransactionResponse.class);
+            TransactionResponse transactionResponse = mock(TransactionResponse.class);
 
             when(transactionService.inquiry(
                     eq(userId),
                     eq(productId),
                     any(TransactionRequest.class)
             ))
-                    .thenReturn((RestApiResponse<TransactionResponse>) okResponseTyped(trxResp));
+                    .thenReturn((RestApiResponse<TransactionResponse>) okResponseTyped(transactionResponse));
 
-            mvc.perform(post(api(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT))
-                            .header(HDR_USER, userId.toString())
-                            .header(HDR_PRODUCT, productId.toString())
+            mockMvc.perform(post(api(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT))
+                            .header(HEADER_USER, userId.toString())
+                            .header(HEADER_PRODUCT, productId.toString())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(om.writeValueAsString(req)))
+                            .content(objectMapper.writeValueAsString(transactionRequest)))
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.code").value(200))
@@ -103,8 +104,8 @@ class TransactionControllerTest {
         void inquiry_missing_user_header() throws Exception {
             UUID productId = UUID.randomUUID();
 
-            mvc.perform(post(api(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT))
-                            .header(HDR_PRODUCT, productId.toString())
+            mockMvc.perform(post(api(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT))
+                            .header(HEADER_PRODUCT, productId.toString())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                     .andExpect(status().isInternalServerError());
@@ -117,8 +118,8 @@ class TransactionControllerTest {
         void inquiry_missing_product_header() throws Exception {
             UUID userId = UUID.randomUUID();
 
-            mvc.perform(post(api(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT))
-                            .header(HDR_USER, userId.toString())
+            mockMvc.perform(post(api(RestApiPathUtility.API_PATH_MOCK_TRANSACTION_OPEN_BANK_ACCOUNT))
+                            .header(HEADER_USER, userId.toString())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                     .andExpect(status().isInternalServerError());
@@ -127,6 +128,25 @@ class TransactionControllerTest {
         }
     }
 
+    @Nested
+    @DisplayName("GET product list by user")
+    class GetProductListTests {
+
+        @Test
+        @DisplayName("200: success")
+        void get_product_list_success() throws Exception {
+            ProductsResponse productsResponse = Mockito.mock(ProductsResponse.class);
+
+            when(transactionService.getListProducts()).thenReturn((RestApiResponse<List<ProductsResponse>>) okResponseTyped(List.of(productsResponse)));
+
+            mockMvc.perform(get(api(RestApiPathUtility.API_PATH_GET_PRODUCTS)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andExpect(jsonPath("$.results").isArray());
+
+            verify(transactionService).getListProducts();
+        }
+    }
 
     @Nested
     @DisplayName("GET customer list by user")
@@ -137,13 +157,13 @@ class TransactionControllerTest {
         void get_customer_list_success() throws Exception {
             UUID userId = UUID.randomUUID();
 
-            CustomerOpenBankAccountResponse item = mock(CustomerOpenBankAccountResponse.class);
+            CustomerOpenBankAccountResponse customerOpenBankAccountResponse = mock(CustomerOpenBankAccountResponse.class);
 
             when(transactionService.getAllTransactionsByUser(eq(userId)))
-                    .thenReturn((RestApiResponse<List<CustomerOpenBankAccountResponse>>) okResponseTyped(List.of(item)));
+                    .thenReturn((RestApiResponse<List<CustomerOpenBankAccountResponse>>) okResponseTyped(List.of(customerOpenBankAccountResponse)));
 
-            mvc.perform(get(api(RestApiPathUtility.API_PATH_GET_CUSTOMER_LIST))
-                            .header(HDR_USER, userId.toString()))
+            mockMvc.perform(get(api(RestApiPathUtility.API_PATH_GET_CUSTOMER_LIST))
+                            .header(HEADER_USER, userId.toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.results").isArray());
@@ -155,7 +175,7 @@ class TransactionControllerTest {
         @Test
         @DisplayName("500: missing X-USER-ID header (mapped by Global Advice)")
         void get_customer_list_missing_header() throws Exception {
-            mvc.perform(get(api(RestApiPathUtility.API_PATH_GET_CUSTOMER_LIST)))
+            mockMvc.perform(get(api(RestApiPathUtility.API_PATH_GET_CUSTOMER_LIST)))
                     .andExpect(status().isInternalServerError());
 
             verifyNoInteractions(transactionService);
@@ -171,21 +191,21 @@ class TransactionControllerTest {
         void patch_transfer_success() throws Exception {
             UUID userId = UUID.randomUUID();
 
-            CommissionToWalletRequest req = new CommissionToWalletRequest();
-            req.setCommissionToWalletAmount(new BigDecimal("10000"));
-            req.setUserEntityDTOPassword("secret-password");
+            CommissionToWalletRequest commissionToWalletRequest = new CommissionToWalletRequest();
+            commissionToWalletRequest.setCommissionToWalletAmount(new BigDecimal("10000"));
+            commissionToWalletRequest.setUserEntityDTOPassword("secret-password");
 
-            UserBalanceAndWalletResponse payload = mock(UserBalanceAndWalletResponse.class);
+            UserBalanceAndWalletResponse userBalanceAndWalletResponse = mock(UserBalanceAndWalletResponse.class);
             when(transactionService.transactionCommissionToWallet(
                     eq(userId),
                     any(CommissionToWalletRequest.class)
             ))
-                    .thenReturn((RestApiResponse<UserBalanceResponse>) okResponseTyped(payload));
+                    .thenReturn((RestApiResponse<UserBalanceResponse>) okResponseTyped(userBalanceAndWalletResponse));
 
-            mvc.perform(patch(api(RestApiPathUtility.API_PATH_MODULE_TRANSFER_TO_WALLET))
-                            .header(HDR_USER, userId.toString())
+            mockMvc.perform(patch(api(RestApiPathUtility.API_PATH_MODULE_TRANSFER_TO_WALLET))
+                            .header(HEADER_USER, userId.toString())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(om.writeValueAsString(req)))
+                            .content(objectMapper.writeValueAsString(commissionToWalletRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.results", notNullValue()));
@@ -197,7 +217,7 @@ class TransactionControllerTest {
         @Test
         @DisplayName("500: missing X-USER-ID header (mapped by Global Advice)")
         void patch_transfer_missing_header() throws Exception {
-            mvc.perform(patch(api(RestApiPathUtility.API_PATH_MODULE_TRANSFER_TO_WALLET))
+            mockMvc.perform(patch(api(RestApiPathUtility.API_PATH_MODULE_TRANSFER_TO_WALLET))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{}"))
                     .andExpect(status().isInternalServerError());
@@ -214,12 +234,12 @@ class TransactionControllerTest {
         void get_balance_wallet_success() throws Exception {
             UUID userId = UUID.randomUUID();
 
-            UserBalanceAndWalletResponse baw = mock(UserBalanceAndWalletResponse.class);
+            UserBalanceAndWalletResponse userBalanceAndWalletResponse = mock(UserBalanceAndWalletResponse.class);
             when(transactionService.getUserBalanceAndWallet(eq(userId)))
-                    .thenReturn((RestApiResponse<UserBalanceAndWalletResponse>) okResponseTyped(baw)); // tanpa cast
+                    .thenReturn((RestApiResponse<UserBalanceAndWalletResponse>) okResponseTyped(userBalanceAndWalletResponse));
 
-            mvc.perform(get(api(RestApiPathUtility.API_PATH_GET_BALANCE_AND_WALLET))
-                            .header(HDR_USER, userId.toString()))
+            mockMvc.perform(get(api(RestApiPathUtility.API_PATH_GET_BALANCE_AND_WALLET))
+                            .header(HEADER_USER, userId.toString()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.results", notNullValue()));
@@ -230,7 +250,7 @@ class TransactionControllerTest {
         @Test
         @DisplayName("500: missing X-USER-ID header (mapped by Global Advice)")
         void get_balance_wallet_missing_header() throws Exception {
-            mvc.perform(get(api(RestApiPathUtility.API_PATH_GET_BALANCE_AND_WALLET)))
+            mockMvc.perform(get(api(RestApiPathUtility.API_PATH_GET_BALANCE_AND_WALLET)))
                     .andExpect(status().isInternalServerError());
 
             verifyNoInteractions(transactionService);

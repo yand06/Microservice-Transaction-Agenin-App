@@ -99,27 +99,27 @@ class TransactionServiceImplTest {
     }
 
     private UserEntityDTO mockExistingUser() {
-        UserEntityDTO user = new UserEntityDTO();
-        user.setUserEntityDTOId(userId);
-        user.setUserEntityDTOFullName("Agent A");
-        user.setUserEntityDTORoleId(UUID.randomUUID());
-        user.setUserEntityDTORoleName("AGENT");
+        UserEntityDTO userEntityDTO = new UserEntityDTO();
+        userEntityDTO.setUserEntityDTOId(userId);
+        userEntityDTO.setUserEntityDTOFullName("Agent A");
+        userEntityDTO.setUserEntityDTORoleId(UUID.randomUUID());
+        userEntityDTO.setUserEntityDTORoleName("AGENT");
 
         String encoded = realEncoder.encode(RAW_PASSWORD);
-        user.setUserEntityDTOPassword(encoded);
+        userEntityDTO.setUserEntityDTOPassword(encoded);
 
         assert encoded != null && !encoded.isEmpty();
 
         when(mUserRepositories.findByUserEntityDTOId(eq(userId)))
-                .thenReturn(Optional.of(user));
-        return user;
+                .thenReturn(Optional.of(userEntityDTO));
+        return userEntityDTO;
     }
 
     private CommissionToWalletRequest makeRequest(BigDecimal amount, String rawPassword) {
-        CommissionToWalletRequest req = new CommissionToWalletRequest();
-        req.setCommissionToWalletAmount(amount);
-        req.setUserEntityDTOPassword(rawPassword);
-        return req;
+        CommissionToWalletRequest commissionToWalletRequest = new CommissionToWalletRequest();
+        commissionToWalletRequest.setCommissionToWalletAmount(amount);
+        commissionToWalletRequest.setUserEntityDTOPassword(rawPassword);
+        return commissionToWalletRequest;
     }
 
 
@@ -135,13 +135,13 @@ class TransactionServiceImplTest {
 
 
     private TransactionRequest buildTransactionRequest() {
-        TransactionRequest req = new TransactionRequest();
-        req.setTransactionEntityDTOCustomerName("Customer A");
-        req.setTransactionEntityDTOCustomerIdentityNumber("1234567890");
-        req.setTransactionEntityDTOCustomerPhoneNumber("08123456789");
-        req.setTransactionEntityDTOCustomerEmail("cust@example.com");
-        req.setTransactionEntityDTOCustomerAddress("123 Main Street");
-        return req;
+        TransactionRequest transactionRequest = new TransactionRequest();
+        transactionRequest.setTransactionEntityDTOCustomerName("Customer A");
+        transactionRequest.setTransactionEntityDTOCustomerIdentityNumber("1234567890");
+        transactionRequest.setTransactionEntityDTOCustomerPhoneNumber("08123456789");
+        transactionRequest.setTransactionEntityDTOCustomerEmail("cust@example.com");
+        transactionRequest.setTransactionEntityDTOCustomerAddress("123 Main Street");
+        return transactionRequest;
     }
 
     /**
@@ -161,7 +161,7 @@ class TransactionServiceImplTest {
     }
 
     /**
-     * Balance creation/update aman untuk SEMUA user (termasuk parent).
+     * Balance creation/update for all user.
      */
     private void mockUserBalanceCreation() {
         when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(any(UUID.class)))
@@ -169,20 +169,20 @@ class TransactionServiceImplTest {
 
         when(mUserBalanceRepositories.save(any(UserBalanceEntityDTO.class)))
                 .thenAnswer(inv -> {
-                    UserBalanceEntityDTO b = inv.getArgument(0);
-                    if (b.getUserBalanceEntityDTOId() == null) {
-                        b.setUserBalanceEntityDTOId(UUID.randomUUID());
+                    UserBalanceEntityDTO userBalanceEntityDTO = inv.getArgument(0);
+                    if (userBalanceEntityDTO.getUserBalanceEntityDTOId() == null) {
+                        userBalanceEntityDTO.setUserBalanceEntityDTOId(UUID.randomUUID());
                     }
-                    if (b.getUserBalanceEntityDTOBalanceAmount() == null) {
-                        b.setUserBalanceEntityDTOBalanceAmount(BigDecimal.ZERO);
+                    if (userBalanceEntityDTO.getUserBalanceEntityDTOBalanceAmount() == null) {
+                        userBalanceEntityDTO.setUserBalanceEntityDTOBalanceAmount(BigDecimal.ZERO);
                     }
-                    b.setUserBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now());
-                    return b;
+                    userBalanceEntityDTO.setUserBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now());
+                    return userBalanceEntityDTO;
                 });
     }
 
     /**
-     * Echo saves untuk TX / OpenBank / BalanceHistorical.
+     * Echo saves for TX / OpenBank / BalanceHistorical.
      */
     private void mockTransactionSaves() {
         when(tTransactionRepositories.save(any(TransactionEntityDTO.class)))
@@ -197,17 +197,17 @@ class TransactionServiceImplTest {
      * Mock role user.
      */
     private void mockUserRole(String role) {
-        UserEntityDTO user = new UserEntityDTO();
-        user.setUserEntityDTOId(userId);
-        user.setUserEntityDTOEmail("agent@example.com");
-        user.setUserEntityDTOFullName("Agent A");
-        user.setUserEntityDTORoleName(role);
-        user.setUserEntityDTORoleId(UUID.randomUUID());
-        when(mUserRepositories.findByUserEntityDTOId(eq(userId))).thenReturn(Optional.of(user));
+        UserEntityDTO userEntityDTO = new UserEntityDTO();
+        userEntityDTO.setUserEntityDTOId(userId);
+        userEntityDTO.setUserEntityDTOEmail("agent@example.com");
+        userEntityDTO.setUserEntityDTOFullName("Agent A");
+        userEntityDTO.setUserEntityDTORoleName(role);
+        userEntityDTO.setUserEntityDTORoleId(UUID.randomUUID());
+        when(mUserRepositories.findByUserEntityDTOId(eq(userId))).thenReturn(Optional.of(userEntityDTO));
     }
 
     /**
-     * Referral untuk SUB_AGENT (hanya lookup parent).
+     * Referral for SUB_AGENT (lookup parent).
      */
     private void mockReferralForSubAgent() {
         this.parentUserId = UUID.randomUUID();
@@ -231,14 +231,14 @@ class TransactionServiceImplTest {
                 mockTransactionSaves();
                 mockUserRole("AGENT");
 
-                TransactionRequest req = buildTransactionRequest();
+                TransactionRequest transactionRequest = buildTransactionRequest();
 
-                RestApiResponse<TransactionResponse> res = service.inquiry(userId, productId, req);
+                RestApiResponse<TransactionResponse> restApiResponse = service.inquiry(userId, productId, transactionRequest);
 
-                assertThat(res).isNotNull();
-                assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS");
-                assertThat(res.getRestApiResponseResults()).isNotNull();
+                assertThat(restApiResponse).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+                assertThat(restApiResponse.getRestApiResponseMessage()).isEqualTo("SUCCESS");
+                assertThat(restApiResponse.getRestApiResponseResults()).isNotNull();
 
                 verify(tTransactionRepositories).save(any(TransactionEntityDTO.class));
                 verify(tTransactionOpenBankAccountRepositories).save(any(TransactionOpenBankAccountEntityDTO.class));
@@ -265,14 +265,14 @@ class TransactionServiceImplTest {
 
                 TransactionRequest transactionRequest = buildTransactionRequest();
 
-                RestApiResponse<TransactionResponse> res =
+                RestApiResponse<TransactionResponse> restApiResponse =
                         service.inquiry(userId, productId, transactionRequest);
 
-                assertThat(res).isNotNull();
-                assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS");
-                assertThat(res.getRestApiResponseResults()).isNotNull();
-                assertThat(res.getRestApiResponseResults().getTransactionEntityDTOCode()).isNotBlank();
+                assertThat(restApiResponse).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+                assertThat(restApiResponse.getRestApiResponseMessage()).isEqualTo("SUCCESS");
+                assertThat(restApiResponse.getRestApiResponseResults()).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseResults().getTransactionEntityDTOCode()).isNotBlank();
 
                 verify(tTransactionRepositories).save(any(TransactionEntityDTO.class));
                 verify(tTransactionOpenBankAccountRepositories).save(any(TransactionOpenBankAccountEntityDTO.class));
@@ -312,9 +312,9 @@ class TransactionServiceImplTest {
                 when(mUserRepositories.findByUserEntityDTOId(eq(userId)))
                         .thenReturn(Optional.empty());
 
-                TransactionRequest req = buildTransactionRequest();
+                TransactionRequest transactionRequest = buildTransactionRequest();
 
-                assertThatThrownBy(() -> service.inquiry(userId, productId, req))
+                assertThatThrownBy(() -> service.inquiry(userId, productId, transactionRequest))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("User not found");
 
@@ -332,9 +332,9 @@ class TransactionServiceImplTest {
                 mockTransactionSaves();
                 mockUserRole("VIEWER");
 
-                TransactionRequest req = buildTransactionRequest();
+                TransactionRequest transactionRequest = buildTransactionRequest();
 
-                assertThatThrownBy(() -> service.inquiry(userId, productId, req))
+                assertThatThrownBy(() -> service.inquiry(userId, productId, transactionRequest))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessage("Transaction FAILED.");
 
@@ -355,12 +355,12 @@ class TransactionServiceImplTest {
         void getListProducts_empty() {
             when(mProductsRepositories.findAll()).thenReturn(Collections.emptyList());
 
-            RestApiResponse<List<ProductsResponse>> res = service.getListProducts();
+            RestApiResponse<List<ProductsResponse>> restApiResponse = service.getListProducts();
 
-            assertThat(res).isNotNull();
-            assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-            assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET Products");
-            assertThat(res.getRestApiResponseResults()).isNotNull().isEmpty();
+            assertThat(restApiResponse).isNotNull();
+            assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+            assertThat(restApiResponse.getRestApiResponseMessage()).isEqualTo("SUCCESS GET Products");
+            assertThat(restApiResponse.getRestApiResponseResults()).isNotNull().isEmpty();
 
             verify(mProductsRepositories, times(1)).findAll();
             verifyNoMoreInteractions(mProductsRepositories);
@@ -369,52 +369,52 @@ class TransactionServiceImplTest {
         @Test
         @DisplayName("200 OK: non-empty → return list of products (with commission projections)")
         void getListProducts_nonEmpty_withCommissionProjection() {
-            UUID p1 = UUID.randomUUID();
-            UUID p2 = UUID.randomUUID();
+            UUID uuid = UUID.randomUUID();
+            UUID uuid1 = UUID.randomUUID();
 
-            ProductsEntityDTO e1 = mock(ProductsEntityDTO.class);
-            ProductsEntityDTO e2 = mock(ProductsEntityDTO.class);
+            ProductsEntityDTO productsEntityDTO = mock(ProductsEntityDTO.class);
+            ProductsEntityDTO productsEntityDTO1 = mock(ProductsEntityDTO.class);
 
-            when(e1.getProductEntityDTOId()).thenReturn(p1);
-            when(e2.getProductEntityDTOId()).thenReturn(p2);
+            when(productsEntityDTO.getProductEntityDTOId()).thenReturn(uuid);
+            when(productsEntityDTO1.getProductEntityDTOId()).thenReturn(uuid1);
 
-            when(e1.getProductEntityDTOName()).thenReturn("Open Bank Account BCA");
-            when(e2.getProductEntityDTOName()).thenReturn("Open Bank Account BRI");
+            when(productsEntityDTO.getProductEntityDTOName()).thenReturn("Open Bank Account BCA");
+            when(productsEntityDTO1.getProductEntityDTOName()).thenReturn("Open Bank Account BRI");
 
-            when(e1.getProductEntityDTOPrice()).thenReturn(new BigDecimal("1000000"));
-            when(e2.getProductEntityDTOPrice()).thenReturn(new BigDecimal("2000000"));
+            when(productsEntityDTO.getProductEntityDTOPrice()).thenReturn(new BigDecimal("1000000"));
+            when(productsEntityDTO1.getProductEntityDTOPrice()).thenReturn(new BigDecimal("2000000"));
 
-            when(mProductsRepositories.findAll()).thenReturn(List.of(e1, e2));
+            when(mProductsRepositories.findAll()).thenReturn(List.of(productsEntityDTO, productsEntityDTO1));
 
-            CommissionValueProjection proj1 = mock(CommissionValueProjection.class);
-            when(proj1.getCommissionsEntityDTOProductId()).thenReturn(p1);
-            when(proj1.getCommissionsEntityDTOValue()).thenReturn(new BigDecimal("150000"));
+            CommissionValueProjection commissionValueProjection = mock(CommissionValueProjection.class);
+            when(commissionValueProjection.getCommissionsEntityDTOProductId()).thenReturn(uuid);
+            when(commissionValueProjection.getCommissionsEntityDTOValue()).thenReturn(new BigDecimal("150000"));
 
-            CommissionValueProjection proj2 = mock(CommissionValueProjection.class);
-            when(proj2.getCommissionsEntityDTOProductId()).thenReturn(p2);
-            when(proj2.getCommissionsEntityDTOValue()).thenReturn(new BigDecimal("175000"));
+            CommissionValueProjection commissionValueProjection1 = mock(CommissionValueProjection.class);
+            when(commissionValueProjection1.getCommissionsEntityDTOProductId()).thenReturn(uuid1);
+            when(commissionValueProjection1.getCommissionsEntityDTOValue()).thenReturn(new BigDecimal("175000"));
 
-            when(mCommissionRepositories.findByCommissionsEntityDTOProductId(p1))
-                    .thenReturn(Optional.of(proj1));
-            when(mCommissionRepositories.findByCommissionsEntityDTOProductId(p2))
-                    .thenReturn(Optional.of(proj2));
-            RestApiResponse<List<ProductsResponse>> res = service.getListProducts();
+            when(mCommissionRepositories.findByCommissionsEntityDTOProductId(uuid))
+                    .thenReturn(Optional.of(commissionValueProjection));
+            when(mCommissionRepositories.findByCommissionsEntityDTOProductId(uuid1))
+                    .thenReturn(Optional.of(commissionValueProjection1));
+            RestApiResponse<List<ProductsResponse>> listRestApiResponse = service.getListProducts();
 
-            assertThat(res).isNotNull();
-            assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-            assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET Products");
-            assertThat(res.getRestApiResponseResults()).isNotNull().hasSize(2);
+            assertThat(listRestApiResponse).isNotNull();
+            assertThat(listRestApiResponse.getRestApiResponseCode()).isEqualTo(200);
+            assertThat(listRestApiResponse.getRestApiResponseMessage()).isEqualTo("SUCCESS GET Products");
+            assertThat(listRestApiResponse.getRestApiResponseResults()).isNotNull().hasSize(2);
 
-            List<ProductsResponse> results = res.getRestApiResponseResults();
-            ProductsResponse r1 = results.stream().filter(r -> "Open Bank Account BCA".equals(r.getProductEntityDTOName())).findFirst().orElseThrow();
-            ProductsResponse r2 = results.stream().filter(r -> "Open Bank Account BRI".equals(r.getProductEntityDTOName())).findFirst().orElseThrow();
+            List<ProductsResponse> results = listRestApiResponse.getRestApiResponseResults();
+            ProductsResponse productsResponse = results.stream().filter(r -> "Open Bank Account BCA".equals(r.getProductEntityDTOName())).findFirst().orElseThrow();
+            ProductsResponse productsResponse1 = results.stream().filter(r -> "Open Bank Account BRI".equals(r.getProductEntityDTOName())).findFirst().orElseThrow();
 
-            assertThat(r1.getProductEntityDTOPrice()).isEqualByComparingTo("1000000");
-            assertThat(r2.getProductEntityDTOPrice()).isEqualByComparingTo("2000000");
+            assertThat(productsResponse.getProductEntityDTOPrice()).isEqualByComparingTo("1000000");
+            assertThat(productsResponse1.getProductEntityDTOPrice()).isEqualByComparingTo("2000000");
 
             verify(mProductsRepositories, times(1)).findAll();
-            verify(mCommissionRepositories, times(1)).findByCommissionsEntityDTOProductId(p1);
-            verify(mCommissionRepositories, times(1)).findByCommissionsEntityDTOProductId(p2);
+            verify(mCommissionRepositories, times(1)).findByCommissionsEntityDTOProductId(uuid);
+            verify(mCommissionRepositories, times(1)).findByCommissionsEntityDTOProductId(uuid1);
             verifyNoMoreInteractions(mProductsRepositories, mCommissionRepositories);
         }
     }
@@ -426,11 +426,11 @@ class TransactionServiceImplTest {
         @Test
         @DisplayName("200 OK (Positive): transactions exist → return sorted list with details")
         void getAllTransactionsByUser_positive_success() {
-            UUID uid = userId;
+            UUID uuid = userId;
             UUID trx1 = UUID.randomUUID();
-            TransactionEntityDTO tx1 = TransactionEntityDTO.builder()
+            TransactionEntityDTO transactionEntityDTO = TransactionEntityDTO.builder()
                     .transactionEntityDTOId(trx1)
-                    .transactionEntityDTOUserId(uid)
+                    .transactionEntityDTOUserId(uuid)
                     .transactionEntityDTOProductName("Open Bank Account BCA")
                     .transactionEntityDTOProductPrice(new BigDecimal("100000"))
                     .transactionEntityDTODate(LocalDateTime.now().minusDays(1))
@@ -438,66 +438,66 @@ class TransactionServiceImplTest {
                     .build();
 
             UUID trx2 = UUID.randomUUID();
-            TransactionEntityDTO tx2 = TransactionEntityDTO.builder()
+            TransactionEntityDTO transactionEntityDTO1 = TransactionEntityDTO.builder()
                     .transactionEntityDTOId(trx2)
-                    .transactionEntityDTOUserId(uid)
+                    .transactionEntityDTOUserId(uuid)
                     .transactionEntityDTOProductName("Open Bank Account BRI")
                     .transactionEntityDTOProductPrice(new BigDecimal("50000"))
                     .transactionEntityDTODate(LocalDateTime.now().minusDays(3))
                     .transactionEntityDTOStatus("SUCCESS")
                     .build();
 
-            when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uid)))
-                    .thenReturn(List.of(tx2, tx1));
+            when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uuid)))
+                    .thenReturn(List.of(transactionEntityDTO1, transactionEntityDTO));
 
-            TransactionOpenBankAccountEntityDTO oba1 = new TransactionOpenBankAccountEntityDTO();
-            oba1.setTransactionOpenBankAccountEntityDTOId(UUID.randomUUID());
-            oba1.setTransactionOpenBankAccountEntityDTOTransactionId(trx1);
-            oba1.setTransactionOpenBankAccountEntityDTOCustomerName("Alice");
-            oba1.setTransactionOpenBankAccountEntityDTOCustomerIdentityNumber("111222333");
-            oba1.setTransactionOpenBankAccountEntityDTOCustomerPhoneNumber("08123456789");
-            oba1.setTransactionOpenBankAccountEntityDTOCustomerEmail("alice@example.com");
-            oba1.setTransactionOpenBankAccountEntityDTOCustomerAddress("Jl. Mawar No. 1");
+            TransactionOpenBankAccountEntityDTO transactionOpenBankAccountEntityDTO = new TransactionOpenBankAccountEntityDTO();
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOId(UUID.randomUUID());
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOTransactionId(trx1);
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOCustomerName("Alice");
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOCustomerIdentityNumber("111222333");
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOCustomerPhoneNumber("08123456789");
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOCustomerEmail("alice@example.com");
+            transactionOpenBankAccountEntityDTO.setTransactionOpenBankAccountEntityDTOCustomerAddress("Jl. Mawar No. 1");
 
             when(tTransactionOpenBankAccountRepositories
                     .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx1)))
-                    .thenReturn(Optional.of(oba1));
+                    .thenReturn(Optional.of(transactionOpenBankAccountEntityDTO));
 
             when(tTransactionOpenBankAccountRepositories
                     .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx2)))
                     .thenReturn(Optional.empty());
 
-            RestApiResponse<List<CustomerOpenBankAccountResponse>> res =
-                    service.getAllTransactionsByUser(uid);
+            RestApiResponse<List<CustomerOpenBankAccountResponse>> restApiResponse =
+                    service.getAllTransactionsByUser(uuid);
 
-            assertThat(res).isNotNull();
-            assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-            assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET all transactions by user");
-            assertThat(res.getRestApiResponseResults()).isNotNull().hasSize(2);
+            assertThat(restApiResponse).isNotNull();
+            assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+            assertThat(restApiResponse.getRestApiResponseMessage()).isEqualTo("SUCCESS GET all transactions by user");
+            assertThat(restApiResponse.getRestApiResponseResults()).isNotNull().hasSize(2);
 
-            CustomerOpenBankAccountResponse r1 = res.getRestApiResponseResults().get(0);
-            CustomerOpenBankAccountResponse r2 = res.getRestApiResponseResults().get(1);
+            CustomerOpenBankAccountResponse customerOpenBankAccountResponse = restApiResponse.getRestApiResponseResults().get(0);
+            CustomerOpenBankAccountResponse customerOpenBankAccountResponse1 = restApiResponse.getRestApiResponseResults().get(1);
 
-            assertThat(r1.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BCA");
-            assertThat(r1.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("100000");
-            assertThat(r1.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
-            assertThat(r1.getCustomerOpenBankAccountName()).isEqualTo("Alice");
-            assertThat(r1.getCustomerOpenBankAccountIdentityNumber()).isEqualTo("111222333");
-            assertThat(r1.getCustomerOpenBankAccountPhoneNumber()).isEqualTo("08123456789");
-            assertThat(r1.getCustomerOpenBankAccountEmail()).isEqualTo("alice@example.com");
-            assertThat(r1.getCustomerOpenBankAccountAddress()).isEqualTo("Jl. Mawar No. 1");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BCA");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("100000");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountName()).isEqualTo("Alice");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountIdentityNumber()).isEqualTo("111222333");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountPhoneNumber()).isEqualTo("08123456789");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountEmail()).isEqualTo("alice@example.com");
+            assertThat(customerOpenBankAccountResponse.getCustomerOpenBankAccountAddress()).isEqualTo("Jl. Mawar No. 1");
 
-            assertThat(r2.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BRI");
-            assertThat(r2.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("50000");
-            assertThat(r2.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
-            assertThat(r2.getCustomerOpenBankAccountName()).isNull();
-            assertThat(r2.getCustomerOpenBankAccountIdentityNumber()).isNull();
-            assertThat(r2.getCustomerOpenBankAccountPhoneNumber()).isNull();
-            assertThat(r2.getCustomerOpenBankAccountEmail()).isNull();
-            assertThat(r2.getCustomerOpenBankAccountAddress()).isNull();
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountProductName()).isEqualTo("Open Bank Account BRI");
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountProductPrice()).isEqualByComparingTo("50000");
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountTransactionStatus()).isEqualTo("SUCCESS");
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountName()).isNull();
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountIdentityNumber()).isNull();
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountPhoneNumber()).isNull();
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountEmail()).isNull();
+            assertThat(customerOpenBankAccountResponse1.getCustomerOpenBankAccountAddress()).isNull();
 
             verify(tTransactionRepositories, times(1))
-                    .findByTransactionEntityDTOUserId(eq(uid));
+                    .findByTransactionEntityDTOUserId(eq(uuid));
             verify(tTransactionOpenBankAccountRepositories, times(1))
                     .findByTransactionOpenBankAccountEntityDTOTransactionId(eq(trx1));
             verify(tTransactionOpenBankAccountRepositories, times(1))
@@ -512,13 +512,13 @@ class TransactionServiceImplTest {
             when(tTransactionRepositories.findByTransactionEntityDTOUserId(eq(uid)))
                     .thenReturn(Collections.emptyList());
 
-            RestApiResponse<List<CustomerOpenBankAccountResponse>> res =
+            RestApiResponse<List<CustomerOpenBankAccountResponse>> restApiResponse =
                     service.getAllTransactionsByUser(uid);
 
-            assertThat(res).isNotNull();
-            assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-            assertThat(res.getRestApiResponseMessage()).isEqualTo("FAILED GET all transactions by user");
-            assertThat(res.getRestApiResponseResults()).isNotNull().isEmpty();
+            assertThat(restApiResponse).isNotNull();
+            assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+            assertThat(restApiResponse.getRestApiResponseMessage()).isEqualTo("FAILED GET all transactions by user");
+            assertThat(restApiResponse.getRestApiResponseResults()).isNotNull().isEmpty();
 
             verify(tTransactionRepositories, times(1))
                     .findByTransactionEntityDTOUserId(eq(uid));
@@ -541,40 +541,40 @@ class TransactionServiceImplTest {
                 mockExistingUser();
 
                 BigDecimal transfer = new BigDecimal("25000");
-                CommissionToWalletRequest req = makeRequest(transfer, RAW_PASSWORD);
+                CommissionToWalletRequest commissionToWalletRequest = makeRequest(transfer, RAW_PASSWORD);
 
-                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                UserBalanceEntityDTO userBalanceEntityDTO = UserBalanceEntityDTO.builder()
                         .userBalanceEntityDTOId(UUID.randomUUID())
                         .userBalanceEntityDTOUserId(userId)
                         .userBalanceEntityDTOBalanceAmount(new BigDecimal("100000"))
                         .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusDays(1))
                         .build();
 
-                UserWalletEntityDTO wallet = new UserWalletEntityDTO();
-                wallet.setUserWalletEntityDTOId(UUID.randomUUID());
-                wallet.setUserWalletEntityDTOUserId(userId);
-                wallet.setUserWalletEntityDTOAmount(new BigDecimal("5000"));
-                wallet.setUserWalletEntityDTOLastUpdate(LocalDateTime.now().minusDays(2));
+                UserWalletEntityDTO userWalletEntityDTO = new UserWalletEntityDTO();
+                userWalletEntityDTO.setUserWalletEntityDTOId(UUID.randomUUID());
+                userWalletEntityDTO.setUserWalletEntityDTOUserId(userId);
+                userWalletEntityDTO.setUserWalletEntityDTOAmount(new BigDecimal("5000"));
+                userWalletEntityDTO.setUserWalletEntityDTOLastUpdate(LocalDateTime.now().minusDays(2));
 
                 when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
-                        .thenReturn(Optional.of(balance));
+                        .thenReturn(Optional.of(userBalanceEntityDTO));
                 when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(userId)))
-                        .thenReturn(Optional.of(wallet));
+                        .thenReturn(Optional.of(userWalletEntityDTO));
 
-                RestApiResponse<UserBalanceResponse> res =
-                        service.transactionCommissionToWallet(userId, req);
+                RestApiResponse<UserBalanceResponse> restApiResponse =
+                        service.transactionCommissionToWallet(userId, commissionToWalletRequest);
 
-                assertThat(res).isNotNull();
-                assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage())
+                assertThat(restApiResponse).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+                assertThat(restApiResponse.getRestApiResponseMessage())
                         .isEqualTo("SUCCESS transfer commission to wallet");
-                assertThat(res.getRestApiResponseResults()).isNotNull();
-                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserId())
+                assertThat(restApiResponse.getRestApiResponseResults()).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseResults().getUserBalanceEntityDTOUserId())
                         .isEqualTo(userId);
-                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserAmount())
-                        .isEqualByComparingTo("75000"); // 100000 - 25000
-                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOUserWalletAmount())
-                        .isEqualByComparingTo("30000"); // 5000 + 25000
+                assertThat(restApiResponse.getRestApiResponseResults().getUserBalanceEntityDTOUserAmount())
+                        .isEqualByComparingTo("75000");
+                assertThat(restApiResponse.getRestApiResponseResults().getUserBalanceEntityDTOUserWalletAmount())
+                        .isEqualByComparingTo("30000");
 
                 ArgumentCaptor<UserBalanceEntityDTO> balCap = ArgumentCaptor.forClass(UserBalanceEntityDTO.class);
                 verify(mUserBalanceRepositories).save(balCap.capture());
@@ -609,9 +609,9 @@ class TransactionServiceImplTest {
             void invalid_password_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = makeRequest(new BigDecimal("10000"), "WrongPassword!");
+                CommissionToWalletRequest commissionToWalletRequest = makeRequest(new BigDecimal("10000"), "WrongPassword!");
 
-                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, commissionToWalletRequest))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("Invalid password");
 
@@ -624,9 +624,9 @@ class TransactionServiceImplTest {
             void amount_invalid_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = makeRequest(BigDecimal.ZERO, RAW_PASSWORD);
+                CommissionToWalletRequest commissionToWalletRequest = makeRequest(BigDecimal.ZERO, RAW_PASSWORD);
 
-                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, commissionToWalletRequest))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("greater than zero");
 
@@ -639,12 +639,12 @@ class TransactionServiceImplTest {
             void balance_not_found_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = makeRequest(new BigDecimal("10000"), RAW_PASSWORD);
+                CommissionToWalletRequest commissionToWalletRequest = makeRequest(new BigDecimal("10000"), RAW_PASSWORD);
 
                 when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
                         .thenReturn(Optional.empty());
 
-                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, commissionToWalletRequest))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("User balance not found");
 
@@ -659,9 +659,9 @@ class TransactionServiceImplTest {
             void insufficient_balance_throws() {
                 mockExistingUser();
 
-                CommissionToWalletRequest req = makeRequest(new BigDecimal("20000"), RAW_PASSWORD);
+                CommissionToWalletRequest commissionToWalletRequest = makeRequest(new BigDecimal("20000"), RAW_PASSWORD);
 
-                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                UserBalanceEntityDTO userBalanceEntityDTO = UserBalanceEntityDTO.builder()
                         .userBalanceEntityDTOId(UUID.randomUUID())
                         .userBalanceEntityDTOUserId(userId)
                         .userBalanceEntityDTOBalanceAmount(new BigDecimal("15000"))
@@ -669,9 +669,9 @@ class TransactionServiceImplTest {
                         .build();
 
                 when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(userId)))
-                        .thenReturn(Optional.of(balance));
+                        .thenReturn(Optional.of(userBalanceEntityDTO));
 
-                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, req))
+                assertThatThrownBy(() -> service.transactionCommissionToWallet(userId, commissionToWalletRequest))
                         .isInstanceOf(CoreThrowHandlerException.class)
                         .hasMessageContaining("Insufficient commission balance");
 
@@ -692,15 +692,15 @@ class TransactionServiceImplTest {
             @Test
             @DisplayName("200 OK: returns balance & wallet amounts")
             void getUserBalanceAndWallet_success() {
-                UUID uid = userId; // reuse
-                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                UUID uid = userId;
+                UserBalanceEntityDTO userBalanceEntityDTO = UserBalanceEntityDTO.builder()
                         .userBalanceEntityDTOId(UUID.randomUUID())
                         .userBalanceEntityDTOUserId(uid)
                         .userBalanceEntityDTOBalanceAmount(new BigDecimal("150000"))
                         .userBalanceEntityDTOBalanceLastUpdate(LocalDateTime.now().minusHours(1))
                         .build();
 
-                UserWalletEntityDTO wallet = UserWalletEntityDTO.builder()
+                UserWalletEntityDTO userWalletEntityDTO = UserWalletEntityDTO.builder()
                         .userWalletEntityDTOId(UUID.randomUUID())
                         .userWalletEntityDTOUserId(uid)
                         .userWalletEntityDTOAmount(new BigDecimal("27500"))
@@ -708,20 +708,20 @@ class TransactionServiceImplTest {
                         .build();
 
                 when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
-                        .thenReturn(Optional.of(balance));
+                        .thenReturn(Optional.of(userBalanceEntityDTO));
                 when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(uid)))
-                        .thenReturn(Optional.of(wallet));
+                        .thenReturn(Optional.of(userWalletEntityDTO));
 
-                RestApiResponse<UserBalanceAndWalletResponse> res =
+                RestApiResponse<UserBalanceAndWalletResponse> restApiResponse =
                         service.getUserBalanceAndWallet(uid);
 
-                assertThat(res).isNotNull();
-                assertThat(res.getRestApiResponseCode()).isEqualTo(200);
-                assertThat(res.getRestApiResponseMessage()).isEqualTo("SUCCESS GET user balance and wallet");
-                assertThat(res.getRestApiResponseResults()).isNotNull();
-                assertThat(res.getRestApiResponseResults().getUserBalanceEntityDTOAmount())
+                assertThat(restApiResponse).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseCode()).isEqualTo(200);
+                assertThat(restApiResponse.getRestApiResponseMessage()).isEqualTo("SUCCESS GET user balance and wallet");
+                assertThat(restApiResponse.getRestApiResponseResults()).isNotNull();
+                assertThat(restApiResponse.getRestApiResponseResults().getUserBalanceEntityDTOAmount())
                         .isEqualByComparingTo("150000");
-                assertThat(res.getRestApiResponseResults().getUserWalletEntityDTOAmount())
+                assertThat(restApiResponse.getRestApiResponseResults().getUserWalletEntityDTOAmount())
                         .isEqualByComparingTo("27500");
 
                 verify(mUserBalanceRepositories).findByUserBalanceEntityDTOUserId(eq(uid));
@@ -752,7 +752,7 @@ class TransactionServiceImplTest {
             @DisplayName("404: throws when user wallet not found")
             void getUserBalanceAndWallet_walletNotFound_throws() {
                 UUID uid = userId;
-                UserBalanceEntityDTO balance = UserBalanceEntityDTO.builder()
+                UserBalanceEntityDTO userBalanceEntityDTO = UserBalanceEntityDTO.builder()
                         .userBalanceEntityDTOId(UUID.randomUUID())
                         .userBalanceEntityDTOUserId(uid)
                         .userBalanceEntityDTOBalanceAmount(new BigDecimal("50000"))
@@ -760,7 +760,7 @@ class TransactionServiceImplTest {
                         .build();
 
                 when(mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(eq(uid)))
-                        .thenReturn(Optional.of(balance));
+                        .thenReturn(Optional.of(userBalanceEntityDTO));
                 when(mUserWalletRepositories.findByUserWalletEntityDTOUserId(eq(uid)))
                         .thenReturn(Optional.empty());
 
