@@ -63,7 +63,7 @@ class TransactionServiceImplTest {
     @Mock
     private SecurityConfig securityConfig;
 
-    private TransactionService service;
+    private TransactionServiceImpl service;
 
     private UUID userId;
     private UUID parentUserId;
