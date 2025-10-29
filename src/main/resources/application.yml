@@ -93,16 +93,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,caches,prometheus
       base-path: /actuator
   endpoint:
     health:
-      show-details: when-authorized
-  health:
-    redis:
+      show-details: always
+    caches:
       enabled: true
-    db:
-      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      service: transaction
+    distribution:
+      percentiles-histogram:
+        cache.size: true
+        cache.gets: true
+        cache.puts: true
 
 # LOGGING
 logging:

@@ -73,9 +73,9 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(rollbackFor = CoreThrowHandlerException.class)
     @Override
     @Caching(evict = {
-            @CacheEvict(value = "transactions", allEntries = true),
+            @CacheEvict(value = "transactions", key = "#userId"),
             @CacheEvict(value = "transactionHistory", key = "#userId"),
-            @CacheEvict(value = "userBalance", key = "#userId")
+            @CacheEvict(value = "userBalance", key = "'balance:wallet:' + #userId")
     })
     public RestApiResponse<TransactionResponse> inquiry(
             UUID userId,
@@ -532,7 +532,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Cacheable(value = "userBalance", key = "#userId")
+    @Cacheable(value = "userBalance", key = "'balance:wallet:' + #userId", unless = "#result.restApiResponseResults == null")
     public RestApiResponse<UserBalanceAndWalletResponse> getUserBalanceAndWallet(UUID userId) {
         UserBalanceEntityDTO userBalance = mUserBalanceRepositories.findByUserBalanceEntityDTOUserId(userId)
                 .orElseThrow(() -> new CoreThrowHandlerException("User balance not found for user: " + userId));
